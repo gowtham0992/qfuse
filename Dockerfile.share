@@ -1,0 +1,11 @@
+# Read-only local development share. No host service or SDK redistribution.
+FROM ubuntu:24.04@sha256:fe81560990fae86dc4743202b2cb4d3df98d0bcf949173cecef15ce1127ef852
+RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends openssh-server python3 \
+    && rm -rf /var/lib/apt/lists/* \
+    && rm -f /etc/ssh/ssh_host_*_key /etc/ssh/ssh_host_*_key.pub \
+    && useradd -M -u 21003 -d /data -s /bin/sh qfuse-share \
+    && mkdir -p /srv/qfuse/data /etc/qfuse \
+    && chmod 755 /srv/qfuse /srv/qfuse/data
+COPY integration/live/sshd_config /etc/qfuse/sshd_config
+COPY scripts/share-entrypoint.sh /usr/local/bin/qfuse-share
+ENTRYPOINT ["/bin/sh", "/usr/local/bin/qfuse-share"]

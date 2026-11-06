@@ -1,0 +1,7 @@
+QFuse: mounted /qfuse-admin-test (read-only, dispatch pending)
+QFuse: serving with 4 minimum receiver(s); concurrent callbacks, per-file I/O locking
+PASS admin status: kernel peer identity and independent management channel
+PASS admin stale-instance guard: wrong nonce cannot stop a filesystem
+PASS admin authorization: non-root client rejected by kernel credentials
+PASS admin control timeout: stopped process cannot trap a management caller; later query succeeds
+PASS admin graceful stop: idle mount exits and removes its channels

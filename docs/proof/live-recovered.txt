@@ -1,0 +1,3 @@
+QNX x86_64 — executing from the laptop's shared build folder
+Edited on the laptop — rebuilt and executed without deployment
+Live settings changed on the laptop, visible on QNX

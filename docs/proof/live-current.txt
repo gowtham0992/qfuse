@@ -1,0 +1,50 @@
+
+=== Build on the laptop; run on QNX ===
+Built aarch64le/hello in the laptop share. No deployment copy to QNX.
+Starting background filesystem at /data/qfuse-laptop...
+/data/qfuse-laptop: ready (pid 5148693)
+Operations: 0/32; cancelled waits: 0; deferred cleanup: 0
+QNX aarch64le — executing from the laptop's shared build folder
+First build from the laptop
+Live settings changed on the laptop, visible on QNX
+/data/qfuse-laptop: ready (pid 5148693)
+Operations: 0/32; cancelled waits: 0; deferred cleanup: 0
+
+=== Edit the laptop source; rebuild; run through the same mount ===
+Built aarch64le/hello in the laptop share. No deployment copy to QNX.
+QNX aarch64le — executing from the laptop's shared build folder
+Edited on the laptop; no deployment copy to QNX
+Live settings changed on the laptop, visible on QNX
+/data/qfuse-laptop: ready (pid 5148693)
+Operations: 0/32; cancelled waits: 0; deferred cleanup: 0
+
+=== Pause the remote SFTP server ===
+Remote SFTP service paused; target control is independent.
+QNX $ timeout 2 cat /data/qfuse-laptop/src/hello.c; reader_result=$?; echo reader_exit=$reader_result; test "$reader_result" = 124
+reader_exit=124
+/data/qfuse-laptop: ready (pid 5148693)
+Operations: 1/32; cancelled waits: 1; deferred cleanup: 0
+Stopped /data/qfuse-laptop (forced)
+
+=== Restore the server; remount; run again ===
+Remote SFTP service restored.
+Starting background filesystem at /data/qfuse-laptop...
+/data/qfuse-laptop: ready (pid 5578773)
+Operations: 0/32; cancelled waits: 0; deferred cleanup: 0
+QNX aarch64le — executing from the laptop's shared build folder
+Edited on the laptop; no deployment copy to QNX
+Live settings changed on the laptop, visible on QNX
+/data/qfuse-laptop: ready (pid 5578773)
+Operations: 0/32; cancelled waits: 0; deferred cleanup: 0
+Stopped /data/qfuse-laptop
+
+=== Native QNX callback isolation and client interruption ===
+QNX $ /data/qfuse/test-stall --timer
+QFuse: mounted /qfuse-stall (read-only, dispatch pending)
+QFuse: serving with 4 minimum receiver(s); concurrent callbacks, per-file I/O locking
+PASS stall precondition: read entered held upstream callback
+PASS unrelated path completes while read remains held
+PASS priority-50 directory listing completes while read remains held
+PASS held client returns ETIMEDOUT before callback release
+PASS late callback completion cannot reply to the client's next held request
+PASS held-callback isolation and client interruption

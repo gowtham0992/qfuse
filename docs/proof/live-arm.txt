@@ -1,0 +1,3 @@
+QNX aarch64le — executing from the laptop's shared build folder
+First build from the laptop
+Live settings changed on the laptop, visible on QNX

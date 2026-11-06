@@ -1,0 +1,22 @@
+name: Independent QNX build report
+description: Report a build or mounted filesystem on your own QNX environment.
+title: "Build report: "
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Follow docs/guide/build.md using your own licensed SDK. Please never upload SDK files, licenses, passwords, keys, or private paths. A failed build is useful evidence too.
+  - type: textarea
+    id: environment
+    attributes:
+      label: Environment
+      description: QFuse commit, Linux host, QNX SDP version, target architecture, and QEMU or physical board.
+    validations:
+      required: true
+  - type: textarea
+    id: result
+    attributes:
+      label: What you ran and observed
+      description: Commands, build outcome, actual mount/read result, and sanitized error output. Distinguish compilation from target execution.
+    validations:
+      required: true

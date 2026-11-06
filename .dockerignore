@@ -1,0 +1,10 @@
+**
+!Dockerfile.dev
+!Dockerfile.verify
+!Dockerfile.target
+!Dockerfile.share
+!integration/
+!integration/live/
+!integration/live/sshd_config
+!scripts/
+!scripts/share-entrypoint.sh

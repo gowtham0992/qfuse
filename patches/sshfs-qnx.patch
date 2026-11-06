@@ -1,0 +1,11 @@
+--- a/sshfs.c
++++ b/sshfs.c
+@@ -4372,7 +4372,7 @@
+ 		exit(1);
+ 	}
+ 
+-#if !defined(__CYGWIN__)
++#if !defined(__CYGWIN__) && !defined(__QNXNTO__)
+ 	res = fcntl(fuse_session_fd(se), F_SETFD, FD_CLOEXEC);
+ 	if (res == -1)
+ 		perror("WARNING: failed to set FD_CLOEXEC on fuse device");

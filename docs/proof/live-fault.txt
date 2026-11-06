@@ -1,0 +1,9 @@
+timeout 2 cat /data/qfuse-laptop/src/hello.c
+# printf 'reader_exit=%d\n' "$?"
+reader_exit=124
+# /data/qfuse/qfuse-mount status /data/qfuse-laptop
+/data/qfuse-laptop: ready (pid 4198422)
+Operations: 1/32; cancelled waits: 1; deferred cleanup: 0
+# /data/qfuse/qfuse-mount stop --force /data/qfuse-laptop
+Stopped /data/qfuse-laptop (forced)
+# 

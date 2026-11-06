@@ -1,0 +1,5 @@
+QNX x86_64 — executing from the laptop's shared build folder
+Edited on the laptop — rebuilt and executed without deployment
+Live settings changed on the laptop, visible on QNX
+/data/qfuse-laptop: ready (pid 4198422)
+Operations: 0/32; cancelled waits: 0; deferred cleanup: 0

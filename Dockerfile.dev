@@ -1,0 +1,15 @@
+# QNX SDK and licenses are installed by their owner into a private volume,
+# never copied into this image. Ubuntu 22.04 is a documented QSC host release;
+# running it under emulation is an additional, locally tested arrangement.
+FROM ubuntu:22.04@sha256:076e7bf82319619f28dd0aa9c02ab34b055ad37100395b4f49a2ffba04fb5e11
+RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
+    ca-certificates curl gcc g++ make patch pkg-config python3 python3-venv \
+    python3-pip ninja-build cmake gettext xz-utils autoconf automake libtool openssh-client openssh-server netcat-openbsd \
+    libgtk-3-0 libnss3 libasound2 libxss1 libxtst6 libxrender1 libxi6 \
+    libxrandr2 libxcomposite1 libxcursor1 libgbm1 libx11-xcb1 libxkbcommon0 \
+    qemu-system-x86 qemu-utils \
+    && rm -rf /var/lib/apt/lists/* \
+    && useradd --create-home --uid 1000 --shell /bin/bash qnx
+USER qnx
+WORKDIR /workspace
+CMD ["sleep", "infinity"]

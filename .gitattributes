@@ -1,0 +1,7 @@
+# Preserve actual terminal/serial captures and unified-patch context bytes.
+docs/evidence/*.txt -text -whitespace
+docs/demo/*.cast -text -whitespace
+docs/demo/*.txt -text -whitespace
+patches/*.patch -whitespace
+docs/evidence/*.tsv -text -whitespace
+docs/proof/*.txt -text -whitespace

@@ -1,0 +1,8 @@
+# Independent clean host-userland check; SDK remains in its owner's volume.
+FROM ubuntu:24.04@sha256:fe81560990fae86dc4743202b2cb4d3df98d0bcf949173cecef15ce1127ef852
+RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends ca-certificates curl git gcc g++ make patch pkg-config python3 xz-utils \
+    && rm -rf /var/lib/apt/lists/* \
+    && (getent passwd 1000 >/dev/null && userdel "$(getent passwd 1000 | cut -d: -f1)" || true) \
+    && useradd --create-home --uid 1000 --shell /bin/bash qnx
+USER qnx
+WORKDIR /workspace

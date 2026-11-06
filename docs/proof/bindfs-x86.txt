@@ -1,0 +1,9 @@
+Starting background filesystem at /data/qfuse-bind.7Kj6Sx/view...
+/data/qfuse-bind.7Kj6Sx/view: ready (pid 6475808)
+Operations: 0/32; cancelled waits: 0; deferred cleanup: 0
+Stopped /data/qfuse-bind.7Kj6Sx/view
+Starting background filesystem at /data/qfuse-bind.7Kj6Sx/view...
+/data/qfuse-bind.7Kj6Sx/view: ready (pid 6533145)
+Operations: 0/32; cancelled waits: 0; deferred cleanup: 0
+Stopped /data/qfuse-bind.7Kj6Sx/view
+PASS native bindfs: write-through, symlink/read, persistence, permission transformation, use_ino and remount

@@ -1,0 +1,5 @@
+QFuse: mounted /data/qfuse-write-mount (read-write, dispatch pending)
+QFuse: serving with 4 minimum receiver(s); concurrent callbacks, per-file I/O locking
+QFuse: mounted /data/qfuse-write-mount (read-write, dispatch pending)
+QFuse: serving with 4 minimum receiver(s); concurrent callbacks, per-file I/O locking
+PASS writable SSHFS: 200037 bytes, 64 KiB writes/reads, pwrite, truncate, chmod, timestamps, rename, symlink, statfs and persisted remount

@@ -1,0 +1,12 @@
+.cache/
+build/
+.env*
+*.qcow2
+*.img
+*.iso
+*.key
+*.license
+.DS_Store
+/core
+/core.*
+*.core

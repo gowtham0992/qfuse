@@ -1,0 +1,103 @@
+QFuse: mounted /qfuse-stall (read-only, dispatch pending)
+QFuse: serving with 4 minimum receiver(s); concurrent callbacks, per-file I/O locking
+PASS stall precondition: read entered held upstream callback
+PASS unrelated path completes while read remains held
+PASS priority-50 directory listing completes while read remains held
+PASS held client returns EINTR before callback release
+PASS cancelled client closes and exits before callback release
+PASS held-callback isolation and client interruption
+QFuse: mounted /qfuse-stall (read-only, dispatch pending)
+QFuse: serving with 4 minimum receiver(s); concurrent callbacks, per-file I/O locking
+PASS stall precondition: read entered held upstream callback
+PASS unrelated path completes while read remains held
+PASS priority-50 directory listing completes while read remains held
+PASS held client returns EINTR before callback release
+PASS late callback completion cannot reply to the client's next held request
+PASS held-callback isolation and client interruption
+QFuse: mounted /qfuse-stall (read-only, dispatch pending)
+QFuse: serving with 4 minimum receiver(s); concurrent callbacks, per-file I/O locking
+PASS stall precondition: read entered held upstream callback
+PASS unrelated path completes while read remains held
+PASS priority-50 directory listing completes while read remains held
+PASS held client returns ETIMEDOUT before callback release
+PASS late callback completion cannot reply to the client's next held request
+PASS held-callback isolation and client interruption
+QFuse: mounted /qfuse-load (read-only, dispatch pending)
+QFuse: serving with 4 minimum receiver(s); concurrent callbacks, per-file I/O locking
+PASS saturation precondition: all 32 admitted read clients are kernel REPLY-blocked while one callback is held
+PASS all 32 kernel reply waits return ETIMEDOUT before callback release, within the functional deadline
+QFuse: mounted /qfuse-report (read-write, dispatch pending)
+QFuse: serving with 4 minimum receiver(s); concurrent callbacks, per-file I/O locking
+QFUSE_CASE_HEADER	name	native_result	mounted_result	native_errno	mounted_errno	native_value	mounted_value	status
+QFUSE_CASE	01.create_exclusive	0	0	0	0			PASS
+QFUSE_CASE	02.fstat_created	0	0	0	0	mode=100640,uid=0,gid=0,nlink=1,size=0	mode=100640,uid=0,gid=0,nlink=1,size=0	PASS
+QFUSE_CASE	03.write_initial	8	8	0	0			PASS
+QFUSE_CASE	04.seek_after_write	8	8	0	0			PASS
+QFUSE_CASE	05.pwrite	2	2	0	0			PASS
+QFUSE_CASE	06.pwrite_preserves_offset	8	8	0	0			PASS
+QFUSE_CASE	07.pread_content	8	8	0	0	6162585965666768	6162585965666768	PASS
+QFUSE_CASE	08.fstat_written_size	0	0	0	0	mode=100640,uid=0,gid=0,nlink=1,size=8	mode=100640,uid=0,gid=0,nlink=1,size=8	PASS
+QFUSE_CASE	09.truncate_shrink	0	0	0	0			PASS
+QFUSE_CASE	10.fstat_shrunk	0	0	0	0	mode=100640,uid=0,gid=0,nlink=1,size=4	mode=100640,uid=0,gid=0,nlink=1,size=4	PASS
+QFUSE_CASE	11.truncate_extend	0	0	0	0			PASS
+QFUSE_CASE	12.extended_zero_bytes	8	8	0	0	0000000000000000	0000000000000000	PASS
+QFUSE_CASE	13.fchmod	0	0	0	0			PASS
+QFUSE_CASE	14.fstat_changed_mode	0	0	0	0	mode=100600,uid=0,gid=0,nlink=1,size=12	mode=100600,uid=0,gid=0,nlink=1,size=12	PASS
+QFUSE_CASE	15.fsync	0	0	0	0			PASS
+QFUSE_CASE	16.close_written	0	0	0	0			PASS
+QFUSE_CASE	17.exclusive_existing_error	-1	-1	17	17			PASS
+QFUSE_CASE	18.open_append	0	0	0	0			PASS
+QFUSE_CASE	19.append	1	1	0	0			PASS
+QFUSE_CASE	20.close_append	0	0	0	0			PASS
+QFUSE_CASE	21.stat_appended	0	0	0	0	mode=100600,uid=0,gid=0,nlink=1,size=13	mode=100600,uid=0,gid=0,nlink=1,size=13	PASS
+QFUSE_CASE	22.truncate_path	0	0	0	0			PASS
+QFUSE_CASE	23.utimensat	0	0	0	0			PASS
+QFUSE_CASE	24.stat_exact_timestamps	0	0	0	0	mode=100600,uid=0,gid=0,nlink=1,size=3,atime=1234567890.000000000,mtime=1234567891.000000000	mode=100600,uid=0,gid=0,nlink=1,size=3,atime=1234567890.000000000,mtime=1234567891.000000000	PASS
+QFUSE_CASE	25.rename	0	0	0	0			PASS
+QFUSE_CASE	26.stat_old_name_error	-1	-1	2	2			PASS
+QFUSE_CASE	27.mkdir	0	0	0	0			PASS
+QFUSE_CASE	28.mkdir_existing_error	-1	-1	17	17			PASS
+QFUSE_CASE	29.stat_directory	0	0	0	0	mode=40750,uid=0,gid=0,nlink=2	mode=40750,uid=0,gid=0,nlink=2	PASS
+QFUSE_CASE	30.create_child	0	0	0	0			PASS
+QFUSE_CASE	31.close_child	0	0	0	0			PASS
+QFUSE_CASE	32.rmdir_nonempty_error	-1	-1	93	93			PASS
+QFUSE_CASE	33.unlink_child	0	0	0	0			PASS
+QFUSE_CASE	34.rmdir_empty	0	0	0	0			PASS
+QFUSE_CASE	35.symlink_relative	0	0	0	0			PASS
+QFUSE_CASE	36.lstat_link	0	0	0	0	mode=120777,uid=0,gid=0,nlink=1,size=7	mode=120777,uid=0,gid=0,nlink=1,size=7	PASS
+QFUSE_CASE	37.readlink	7	7	0	0	72656e616d6564	72656e616d6564	PASS
+QFUSE_CASE	38.readlink_short_buffer	3	3	0	0	72656e	72656e	PASS
+QFUSE_CASE	39.open_follow_link	0	0	0	0			PASS
+QFUSE_CASE	40.read_followed_content	3	3	0	0	616258	616258	PASS
+QFUSE_CASE	41.pread_negative_error	-1	-1	22	22			PASS
+QFUSE_CASE	42.close_followed	0	0	0	0			PASS
+QFUSE_CASE	43.nofollow_error	-1	-1	90	90			PASS
+QFUSE_CASE	44.chmod_path	0	0	0	0			PASS
+QFUSE_CASE	45.chown_self	0	0	0	0			PASS
+QFUSE_CASE	46.stat_owner_mode	0	0	0	0	mode=100640,uid=0,gid=0,nlink=1,size=3	mode=100640,uid=0,gid=0,nlink=1,size=3	PASS
+QFUSE_CASE	47.statvfs_geometry	0	0	0	0	bsize=4096,frsize=4096,namemax=510	bsize=4096,frsize=4096,namemax=510	PASS
+QFUSE_CASE	48.unlink_link	0	0	0	0			PASS
+QFUSE_CASE	49.unlink_file	0	0	0	0			PASS
+QFUSE_CASE	50.open_missing_error	-1	-1	2	2			PASS
+QFUSE_CASE	51.rmdir_tree	0	0	0	0			PASS
+QFUSE_CASE_SUMMARY	51	0
+PASS named differential report: distinct syscall cases, exact semantic results/errno and deterministic metadata/content
+QFuse: mounted /qfuse-concurrency (read-write, dispatch pending)
+QFuse: serving with 4 minimum receiver(s); concurrent callbacks, per-file I/O locking
+PASS concurrent clients: 8 processes appended 128 intact unique records through the four-worker resource manager
+QFuse: mounted /qfuse-lifecycle (read-only, dispatch pending)
+QFuse: serving with 4 minimum receiver(s); concurrent callbacks, per-file I/O locking
+qfuse-unmount: Resource busy
+PASS unmount: busy mount rejected, idle mount detached, server exited cleanly
+QFuse: mounted /qfuse-lifecycle (read-only, dispatch pending)
+QFuse: serving with 4 minimum receiver(s); concurrent callbacks, per-file I/O locking
+QFuse mounted executable ran
+PASS executable loading: QNX loader executed the binary through the mount
+PASS explicit forced unmount: pager/user handles detached and active client receives a native error
+QFuse: mounted /qfuse-lifecycle (read-only, dispatch pending)
+QFuse: serving with 4 minimum receiver(s); concurrent callbacks, per-file I/O locking
+PASS daemon death during copy: partial copy rejected with a native error instead of hanging or false EOF
+QFuse: mounted /qfuse-lifecycle (read-only, dispatch pending)
+QFuse: serving with 4 minimum receiver(s); concurrent callbacks, per-file I/O locking
+QFuse mounted executable ran
+PASS recovery: remounted after daemon death and executed the same binary

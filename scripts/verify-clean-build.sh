@@ -8,7 +8,7 @@ run=$(mktemp -d "$checks/run.XXXXXX")
 mode=${1:---clone}
 case "$mode" in
  --clone)
-  git -c safe.directory=/workspace clone --no-local /workspace "$run/qfuse"
+  git -c safe.directory=/workspace clone --no-local "${QFUSE_SOURCE_REPOSITORY:-/workspace}" "$run/qfuse"
   git -C "$run/qfuse" status --porcelain | python3 -c 'import sys; assert not sys.stdin.read()'
   git -C "$run/qfuse" rev-parse HEAD
   python3 - "$run/qfuse" <<'PYTHON'

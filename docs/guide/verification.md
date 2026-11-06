@@ -71,3 +71,8 @@ The current ARM 5,000-file transcript includes native cp and diff. An x86 rerun
 under nested host emulation was manually stopped to free the target for final
 checks; its partial copy is not counted as a passed run. Historical transport or
 SDK-tool crashes are not silently treated as native test passes.
+
+Public host CI has passed. The [upstream recipe PR](https://github.com/qnx-ports/build-files/pull/334)
+is open, and [independent reproduction](https://github.com/gowtham0992/qfuse/issues/1)
+is requested. Neither an open PR nor the author's own extra userland build is
+an accepted contribution or an independent user result.

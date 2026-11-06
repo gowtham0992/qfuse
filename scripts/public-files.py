@@ -12,8 +12,9 @@ def public_files(root:Path):
         base=root/name
         if not base.exists():continue
         for path in base.rglob('*'):
+            if set(path.relative_to(root).parts) & {'build','stage','.cache','.git','__pycache__'}:continue
             if path.is_symlink():raise ValueError('Source export does not follow symlinks: '+str(path))
-            if path.is_file() and '__pycache__' not in path.parts and (path.suffix in EXTENSIONS or path.name in {'Makefile','LICENSE','sshd_config'}):
+            if path.is_file() and '__pycache__' not in path.parts and (path.suffix in EXTENSIONS or path.name in {'Makefile','LICENSE','sshd_config','.gitignore'}):
                 files.append(path)
     for name in ROOT_FILES:
         path=root/name

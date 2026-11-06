@@ -72,7 +72,7 @@ Mac/container arrangement.
   signal/kernel-timeout interruption, descriptor close/exit and late replies.
 - Saturation tests fill the admitted request budget and check timeout handling.
 - Clean-clone rebuilds in separate Ubuntu userlands on the same owner's host.
-  Independent developer reproduction is tracked separately.
+  Independent developer reproduction is [requested separately](https://github.com/gowtham0992/qfuse/issues/1).
 
 [Verification and evidence](docs/guide/verification.md) distinguishes native
 execution from host-only checks and lists the exact qualifications.
@@ -111,8 +111,9 @@ These are tested compatibility baselines, not a claim that every FUSE program
 or mount option works.
 
 The [porting guide](docs/guide/porting.md) explains how to evaluate another
-filesystem. A local [qnx-ports build-files overlay](integration/qnx-ports/qfuse)
-is supplied. Upstream source is fetched by pinned URL; this repository contains
+filesystem. The [qnx-ports recipe](integration/qnx-ports/qfuse) is proposed in
+[upstream PR #334](https://github.com/qnx-ports/build-files/pull/334); acceptance
+is pending. Upstream source is fetched by pinned URL; this repository contains
 the porting layer and build work, not upstream Git history.
 
 Original QFuse code is MIT. Upstream components retain their own licenses; see

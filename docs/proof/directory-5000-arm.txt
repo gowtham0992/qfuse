@@ -5,12 +5,12 @@ Prepared 3000 synthetic files
 Prepared 4000 synthetic files
 Prepared 5000 synthetic files
 QFuse: mounted /qfuse-pass (read-only, dispatch pending)
-QFuse: serving with 4 minimum receiver(s); concurrent callbacks, per-file I/O locking
+QFuse: serving with 4 minimum receiver(s); concurrent callbacks, per-file operation locking
 PASS passthrough: create/truncate/write/chmod/unlink cannot change backing files
 PASS passthrough: 5000-entry directory, continuation, rewind, unique names and inode consistency
 PASS passthrough: native cp copied 5000 files through the mount; native diff -r is clean
 PASS passthrough: existing read handle survives backing rename and replacement
 QFuse: mounted /qfuse-pass (read-only, dispatch pending)
-QFuse: serving with 4 minimum receiver(s); concurrent callbacks, per-file I/O locking
+QFuse: serving with 4 minimum receiver(s); concurrent callbacks, per-file operation locking
 PASS passthrough: graceful detach and remount with updated backing contents
 PASS read-only passthrough suite

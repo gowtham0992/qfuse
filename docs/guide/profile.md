@@ -24,10 +24,17 @@ OCB budget is exhausted. The request pool can grow to 64 threads, leaving
 capacity for descriptor lifecycle and control messages.
 
 Callbacks on different files may run concurrently. Same-file I/O is serialized
-by a priority-inheriting operation mutex. Namespace mutations hold an exclusive
-transaction gate; conflicting operations can wait, and their waits remain
-interruptible. `-s` preserves callback serialization while cancellation and
-administration remain separate.
+by a priority-inheriting operation mutex, including open and stat on the same
+file. Cancelled requests waiting for that mutex unwind and return their worker
+and admission slot; a callback already running retains its resources until it
+returns.
+
+Namespace mutations hold a mount-wide exclusive transaction gate. Any stalled
+read holds its shared side and blocks all namespace mutations. A stalled
+namespace mutation holds the exclusive side and blocks other payload operations
+across the mount. Both kinds of client wait are interruptible; namespace writer
+fairness under sustained readers is not guaranteed. `-s` preserves callback
+serialization while cancellation and administration remain separate.
 
 A cancelled client wait does not terminate the foreign callback. Private buffers,
 SDK bindings and file handles remain owned until the operation unwinds. Writes

@@ -34,6 +34,8 @@ without enabling a host SSH service.
 When a callback or network operation stalls, an application can use signals or
 QNX kernel timeouts to interrupt its wait. Filesystem code may still be running:
 cancellation does not roll back writes or forcibly cancel third-party threads.
+A stalled read blocks namespace mutations across the mount; a stalled namespace
+mutation blocks other payload operations. Those client waits remain interruptible.
 Use `qfuse-mount stop --force /data/laptop` for explicit process-level recovery.
 
 ## Build on a Linux SDK host
@@ -81,10 +83,10 @@ execution from host-only checks and lists the exact qualifications.
 
 Each filesystem links against `libfuse3.a`. Native QNX connect/I/O messages map
 to its callbacks, with authenticated caller identities and permission checks.
-Callbacks can run concurrently on different files. Per-file operation locks
-preserve I/O ordering, and short state critical sections protect SDK attributes
-and namespace bookkeeping. The dispatcher releases state locks around foreign
-callbacks. Deferred release runs outside the request's reply lifetime.
+Callbacks can run concurrently on different files. A per-file operation lock
+serializes open, stat and I/O on that file. Short state critical sections protect
+SDK attributes and namespace bookkeeping. The dispatcher releases state locks
+around foreign callbacks. Deferred release runs outside the request's reply lifetime.
 
 ```mermaid
 flowchart LR

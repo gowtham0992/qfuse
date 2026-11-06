@@ -208,13 +208,43 @@ static int attr_state_trylock(iofunc_attr_t *attr)
         state_depth++;
     return e;
 }
+/* A kernel wait retains the mutex's priority-inheritance protocol. Periodic
+ * monotonic deadlines let an unblocked client abandon a lock it never owned;
+ * its dispatcher can then unwind and return the admission slot. Never unlock
+ * a mutex on behalf of a thread already executing a foreign callback. */
+static int operation_lock(pthread_mutex_t *mutex)
+{
+    if (!current_request)
+        return pthread_mutex_lock(mutex);
+    if (request_cancelled())
+        return ECANCELED;
+    int e = pthread_mutex_trylock(mutex);
+    while (e == EBUSY || e == ETIMEDOUT) {
+        if (request_cancelled())
+            return ECANCELED;
+        struct timespec deadline;
+        if (clock_gettime(CLOCK_MONOTONIC, &deadline))
+            return errno;
+        deadline.tv_nsec += 10000000;
+        if (deadline.tv_nsec >= 1000000000) {
+            deadline.tv_sec++;
+            deadline.tv_nsec -= 1000000000;
+        }
+        e = pthread_mutex_clocklock(mutex, CLOCK_MONOTONIC, &deadline);
+    }
+    if (!e && request_cancelled()) {
+        pthread_mutex_unlock(mutex);
+        return ECANCELED;
+    }
+    return e;
+}
 static int lock_ocb(resmgr_context_t *c, void *v, iofunc_ocb_t *o)
 {
     waiting_begin();
     struct node *n = (struct node *)o->attr;
     int e = 0;
     if (current_request && current_request->payload) {
-        e = pthread_mutex_lock(&n->operation_mutex);
+        e = operation_lock(&n->operation_mutex);
         if (!e)
             operation_owner = n;
     }

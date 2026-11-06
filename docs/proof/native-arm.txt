@@ -1,8 +1,7 @@
-Privately staged target libraries: libc.so.6, libffi.so.9, libgcc_s.so.1, libglib-2.0.so.0, libgthread-2.0.so.0, libiconv.so.1, libintl.so.1, libm.so.3, libsocket.so.4
 QFuse: mounted /qfuse-identity-a (read-only, dispatch pending)
-QFuse: serving with 4 minimum receiver(s); concurrent callbacks, per-file I/O locking
+QFuse: serving with 4 minimum receiver(s); concurrent callbacks, per-file operation locking
 QFuse: mounted /qfuse-identity-b (read-only, dispatch pending)
-QFuse: serving with 4 minimum receiver(s); concurrent callbacks, per-file I/O locking
+QFuse: serving with 4 minimum receiver(s); concurrent callbacks, per-file operation locking
 Mounted filesystem devices: 2054 and 2055
 PASS distinct filesystem identities for simultaneous native resource-manager mounts
 PASS library ABI: fuse_new reads only the supplied operation-table prefix
@@ -11,7 +10,7 @@ PASS upstream hello: options, init, metadata, listing, open, reads, errors, shut
 PASS core: caller context isolation, lifecycle, missing callbacks, oversized replies
 CALLBACK TESTS ONLY: no filesystem mount has been verified in this run.
 QFuse: mounted /qfuse-hello (read-only, dispatch pending)
-QFuse: serving with 4 minimum receiver(s); concurrent callbacks, per-file I/O locking
+QFuse: serving with 4 minimum receiver(s); concurrent callbacks, per-file operation locking
 total 0
 drwxr-xr-x  2 root root  0 1970-01-01 00:00 .
 drwxr-xr-x  2 root root 10 2026-11-06 04:45 ..
@@ -24,7 +23,7 @@ Access: 1970-01-01 00:00:00.000000000 +0000
 Modify: 1970-01-01 00:00:00.000000000 +0000
 Change: 1970-01-01 00:00:00.000000000 +0000
 QNX callback!QFuse: mounted /qfuse-hello (read-only, dispatch pending)
-QFuse: serving with 4 minimum receiver(s); concurrent callbacks, per-file I/O locking
+QFuse: serving with 4 minimum receiver(s); concurrent callbacks, per-file operation locking
 total 0
 drwxr-xr-x  2 root root  0 1970-01-01 00:00 .
 drwxr-xr-x  2 root root 10 2026-11-06 04:45 ..
@@ -37,7 +36,7 @@ Access: 1970-01-01 00:00:00.000000000 +0000
 Modify: 1970-01-01 00:00:00.000000000 +0000
 Change: 1970-01-01 00:00:00.000000000 +0000
 QNX callback!QFuse: mounted /qfuse-context (read-only, dispatch pending)
-QFuse: serving with 4 minimum receiver(s); concurrent callbacks, per-file I/O locking
+QFuse: serving with 4 minimum receiver(s); concurrent callbacks, per-file operation locking
 
 PASS native mount: stat, readdir, rewind, read, pread, EOF, seek, dup, fstat, read-only errors, ls, cat
 
@@ -45,10 +44,10 @@ PASS native mount: stat, readdir, rewind, read, pread, EOF, seek, dup, fstat, re
 PASS native mount: graceful termination, detached path, remount
 PASS native security: per-request UID/GID/PID, private data, directory handles, parent search permissions
 QFuse: mounted /qfuse-context (read-only, dispatch pending)
-QFuse: serving with 1 minimum receiver(s); concurrent callbacks, per-file I/O locking
+QFuse: serving with 1 minimum receiver(s); concurrent callbacks, per-file operation locking
 PASS native security: per-request UID/GID/PID, private data, directory handles, parent search permissions
 QFuse: mounted /qfuse-stall (read-only, dispatch pending)
-QFuse: serving with 4 minimum receiver(s); concurrent callbacks, per-file I/O locking
+QFuse: serving with 4 minimum receiver(s); concurrent callbacks, per-file operation locking
 PASS stall precondition: read entered held upstream callback
 PASS unrelated path completes while read remains held
 PASS priority-50 directory listing completes while read remains held
@@ -56,7 +55,7 @@ PASS held client returns EINTR before callback release
 PASS late callback completion cannot reply to the client's next held request
 PASS held-callback isolation and client interruption
 QFuse: mounted /qfuse-stall (read-only, dispatch pending)
-QFuse: serving with 4 minimum receiver(s); concurrent callbacks, per-file I/O locking
+QFuse: serving with 4 minimum receiver(s); concurrent callbacks, per-file operation locking
 PASS stall precondition: read entered held upstream callback
 PASS unrelated path completes while read remains held
 PASS priority-50 directory listing completes while read remains held
@@ -64,7 +63,7 @@ PASS held client returns ETIMEDOUT before callback release
 PASS late callback completion cannot reply to the client's next held request
 PASS held-callback isolation and client interruption
 QFuse: mounted /qfuse-stall (read-only, dispatch pending)
-QFuse: serving with 4 minimum receiver(s); concurrent callbacks, per-file I/O locking
+QFuse: serving with 4 minimum receiver(s); concurrent callbacks, per-file operation locking
 PASS stall precondition: read entered held upstream callback
 PASS unrelated path completes while read remains held
 PASS priority-50 directory listing completes while read remains held
@@ -72,24 +71,24 @@ PASS held client returns EINTR before callback release
 PASS cancelled client closes and exits before callback release
 PASS held-callback isolation and client interruption
 QFuse: mounted /qfuse-admin-test (read-only, dispatch pending)
-QFuse: serving with 4 minimum receiver(s); concurrent callbacks, per-file I/O locking
+QFuse: serving with 4 minimum receiver(s); concurrent callbacks, per-file operation locking
 PASS admin status: kernel peer identity and independent management channel
 PASS admin stale-instance guard: wrong nonce cannot stop a filesystem
 PASS admin authorization: non-root client rejected by kernel credentials
 PASS admin control timeout: stopped process cannot trap a management caller; later query succeeds
 PASS admin graceful stop: idle mount exits and removes its channels
 QFuse: mounted /qfuse-conformance (read-write, dispatch pending)
-QFuse: serving with 4 minimum receiver(s); concurrent callbacks, per-file I/O locking
+QFuse: serving with 4 minimum receiver(s); concurrent callbacks, per-file operation locking
 PASS native oracle: 86 assertions
 PASS writable differential conformance: 168 assertions, 6 exact errno comparisons
 PASS dirent adapter: native metadata types, dangling symlink, optional FIFO type, filesystem maximum name, independent streams, changed cwd, clean EOF
 QFuse: mounted /qfuse-plus (read-write, dispatch pending)
-QFuse: serving with 4 minimum receiver(s); concurrent callbacks, per-file I/O locking
+QFuse: serving with 4 minimum receiver(s); concurrent callbacks, per-file operation locking
 QFuse: mounted /qfuse-plus (read-write, dispatch pending)
-QFuse: serving with 4 minimum receiver(s); concurrent callbacks, per-file I/O locking
+QFuse: serving with 4 minimum receiver(s); concurrent callbacks, per-file operation locking
 PASS unchanged passthrough --plus: unsupported complete-attribute hint rejected with ENOTSUP; ordinary root listing completes without recursive lookup
 QFuse: mounted /qfuse-report (read-write, dispatch pending)
-QFuse: serving with 4 minimum receiver(s); concurrent callbacks, per-file I/O locking
+QFuse: serving with 4 minimum receiver(s); concurrent callbacks, per-file operation locking
 QFUSE_CASE_HEADER	name	native_result	mounted_result	native_errno	mounted_errno	native_value	mounted_value	status
 QFUSE_CASE	01.create_exclusive	0	0	0	0			PASS
 QFUSE_CASE	02.fstat_created	0	0	0	0	mode=100640,uid=0,gid=0,nlink=1,size=0	mode=100640,uid=0,gid=0,nlink=1,size=0	PASS
@@ -145,59 +144,64 @@ QFUSE_CASE	51.rmdir_tree	0	0	0	0			PASS
 QFUSE_CASE_SUMMARY	51	0
 PASS named differential report: distinct syscall cases, exact semantic results/errno and deterministic metadata/content
 QFuse: mounted /qfuse-permissions (read-write, dispatch pending)
-QFuse: serving with 4 minimum receiver(s); concurrent callbacks, per-file I/O locking
+QFuse: serving with 4 minimum receiver(s); concurrent callbacks, per-file operation locking
 PASS writable security: authenticated owner/group, caller umask, private-parent denial, sticky unlink and chmod denial
 QFuse: mounted /qfuse-concurrency (read-write, dispatch pending)
-QFuse: serving with 4 minimum receiver(s); concurrent callbacks, per-file I/O locking
+QFuse: serving with 4 minimum receiver(s); concurrent callbacks, per-file operation locking
 PASS concurrent clients: 8 processes appended 128 intact unique records through the four-worker resource manager
 QFuse: mounted /qfuse-priority (read-only, dispatch pending)
-QFuse: serving with 4 minimum receiver(s); concurrent callbacks, per-file I/O locking
+QFuse: serving with 4 minimum receiver(s); concurrent callbacks, per-file operation locking
 PASS native priority inheritance: client priority 20 reached the callback unchanged, with authenticated caller PID
 PASS native priority inheritance: client priority 30 reached the callback unchanged, with authenticated caller PID
      pid tid name                         prio STATE          Blocked                     
- 4440085   1 data/qfuse/qfuse-priority     10r SIGWAITINFO                                
- 4440085   2 data/qfuse/qfuse-priority     10r RECEIVE        2                           
- 4440085   3 data/qfuse/qfuse-priority     10r NANOSLEEP                                  
- 4440085   4 data/qfuse/qfuse-priority     10r CONDVAR        (0x29b1a98030)              
- 4440085   5 data/qfuse/qfuse-priority     10r RECEIVE        1                           
- 4440085   6 data/qfuse/qfuse-priority     10r RECEIVE        1                           
- 4440085   7 data/qfuse/qfuse-priority     10r RECEIVE        1                           
- 4440085   8 data/qfuse/qfuse-priority     30r RECEIVE        1                           
- 4440085   9 data/qfuse/qfuse-priority     30r REPLY          122889                      
+16572437   1 data/qfuse/qfuse-priority     10r SIGWAITINFO                                
+16572437   2 data/qfuse/qfuse-priority     10r RECEIVE        2                           
+16572437   3 data/qfuse/qfuse-priority     10r NANOSLEEP                                  
+16572437   4 data/qfuse/qfuse-priority     10r CONDVAR        (0x4d1e469030)              
+16572437   5 data/qfuse/qfuse-priority     10r RECEIVE        1                           
+16572437   6 data/qfuse/qfuse-priority     10r RECEIVE        1                           
+16572437   7 data/qfuse/qfuse-priority     10r RECEIVE        1                           
+16572437   8 data/qfuse/qfuse-priority     30r RECEIVE        1                           
+16572437   9 data/qfuse/qfuse-priority     30r REPLY          122889                      
 PASS QNX IPC priority and callback context evidence
 QFuse: mounted /qfuse-lifecycle (read-only, dispatch pending)
-QFuse: serving with 4 minimum receiver(s); concurrent callbacks, per-file I/O locking
+QFuse: serving with 4 minimum receiver(s); concurrent callbacks, per-file operation locking
 qfuse-unmount: Resource busy
 PASS unmount: busy mount rejected, idle mount detached, server exited cleanly
 QFuse: mounted /qfuse-lifecycle (read-only, dispatch pending)
-QFuse: serving with 4 minimum receiver(s); concurrent callbacks, per-file I/O locking
+QFuse: serving with 4 minimum receiver(s); concurrent callbacks, per-file operation locking
 QFuse mounted executable ran
 PASS executable loading: QNX loader executed the binary through the mount
 PASS explicit forced unmount: pager/user handles detached and active client receives a native error
 QFuse: mounted /qfuse-lifecycle (read-only, dispatch pending)
-QFuse: serving with 4 minimum receiver(s); concurrent callbacks, per-file I/O locking
+QFuse: serving with 4 minimum receiver(s); concurrent callbacks, per-file operation locking
 PASS daemon death during copy: partial copy rejected with a native error instead of hanging or false EOF
 QFuse: mounted /qfuse-lifecycle (read-only, dispatch pending)
-QFuse: serving with 4 minimum receiver(s); concurrent callbacks, per-file I/O locking
+QFuse: serving with 4 minimum receiver(s); concurrent callbacks, per-file operation locking
 QFuse mounted executable ran
 PASS recovery: remounted after daemon death and executed the same binary
 QFuse: mounted /qfuse-inflight (read-only, dispatch pending)
-QFuse: serving with 4 minimum receiver(s); concurrent callbacks, per-file I/O locking
+QFuse: serving with 4 minimum receiver(s); concurrent callbacks, per-file operation locking
      pid tid STATE          Blocked                     
- 4620310   1 REPLY          4616213                     
+16752662   1 REPLY          16748565                    
 PASS in-flight precondition: real copier is kernel REPLY-blocked inside the held passthrough read
 PASS strict death deadline: error returned from the already-blocked read before the required deadline; partial copy rejected
 QFuse: mounted /qfuse-inflight (read-only, dispatch pending)
-QFuse: serving with 4 minimum receiver(s); concurrent callbacks, per-file I/O locking
+QFuse: serving with 4 minimum receiver(s); concurrent callbacks, per-file operation locking
 PASS post-crash remount: normal upstream passthrough returned the complete unchanged file
-QFuse: mounted /qfuse-load (read-only, dispatch pending)
-QFuse: serving with 4 minimum receiver(s); concurrent callbacks, per-file I/O locking
-PASS saturation precondition: all 32 admitted read clients are kernel REPLY-blocked while one callback is held
-PASS all 32 kernel reply waits return ETIMEDOUT before callback release, within the functional deadline
-Checking libffi mixed arguments
-Checking libffi executable closure
-Closure allocated: data=126eddf010 code=126eddf010
-Closure prepared
-Calling closure
-Checking GLib hash/thread/atomic
-PASS real target dependencies: GLib hash/thread/atomic and libffi mixed-argument call/executable closure
+Preparing 5000-file synthetic QNX fixture...
+Prepared 1000 synthetic files
+Prepared 2000 synthetic files
+Prepared 3000 synthetic files
+Prepared 4000 synthetic files
+Prepared 5000 synthetic files
+QFuse: mounted /qfuse-pass (read-only, dispatch pending)
+QFuse: serving with 4 minimum receiver(s); concurrent callbacks, per-file operation locking
+PASS passthrough: create/truncate/write/chmod/unlink cannot change backing files
+PASS passthrough: 5000-entry directory, continuation, rewind, unique names and inode consistency
+PASS passthrough: native cp copied 5000 files through the mount; native diff -r is clean
+PASS passthrough: existing read handle survives backing rename and replacement
+QFuse: mounted /qfuse-pass (read-only, dispatch pending)
+QFuse: serving with 4 minimum receiver(s); concurrent callbacks, per-file operation locking
+PASS passthrough: graceful detach and remount with updated backing contents
+PASS read-only passthrough suite

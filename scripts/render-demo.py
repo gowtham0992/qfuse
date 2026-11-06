@@ -52,9 +52,9 @@ for frame in range(int(duration*fps)+1):
             color='#70e5cf' if line.startswith(('PASS','===','Operations:','Stopped')) else '#eaf0f5'
             draw.text((78,226+j*30),line,font=font,fill=color)
     else:
-        draw.text((92,232),'A stalled remote filesystem. A responsive target.',font=big,fill='#70e5cf')
+        draw.text((92,232),'A stalled remote read. An interrupted client wait.',font=big,fill='#70e5cf')
         for j,line in enumerate(['The reader returned at its timeout.', 'Status stayed available while its callback remained pending.',
-            'Explicit force stop and remount restored access.', '', 'Source compatibility is a tested subset; mounting requires root.',
+            'Explicit force stop and remount restored access.', 'Namespace changes can wait behind a stalled read.', 'Source compatibility is a tested subset; mounting requires root.',
             'QEMU functional evidence does not establish hard real-time guarantees.']):
             draw.text((92,357+j*61),line,font=font,fill='#eaf0f5' if j<3 else '#83a5bb')
     draw.text((64,1025),f'Actual terminal output | Playback {a.slow:g}x slower for readability | No performance claim',font=small,fill='#83a5bb')

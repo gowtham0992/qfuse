@@ -1,0 +1,5 @@
+QFuse: mounted /qfuse-load (read-only, dispatch pending)
+QFuse: serving with 4 minimum receiver(s); concurrent callbacks, per-file I/O locking
+PASS saturation precondition: all 32 admitted read clients are kernel REPLY-blocked while one callback is held
+PASS all 32 read/open waits return EINTR before callback release, within the functional deadline
+FAIL saturation line 156: fd >= 0 errno=11

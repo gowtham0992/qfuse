@@ -23,7 +23,7 @@ case "$mode" in
   if [[ $mode == --full ]]; then bash scripts/target-exec.sh 'QFUSE_PASSTHROUGH_BINARY=/data/qfuse/qfuse-passthrough /data/qfuse/test-passthrough'; fi
   ;;
  --stall) bash scripts/target-exec.sh '/data/qfuse/test-stall && /data/qfuse/test-stall --timer && /data/qfuse/test-stall --exit';;
- --saturation) bash scripts/target-exec.sh '/data/qfuse/test-stall-load';;
+ --saturation) bash scripts/target-exec.sh '/data/qfuse/test-stall-load && /data/qfuse/test-stall-load --open';;
  --report) bash scripts/target-exec.sh '/data/qfuse/test-operation-report';;
  --readonly-sshfs)
   bash scripts/target-exec.sh '/data/qfuse/test-sshfs'

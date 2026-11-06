@@ -20,7 +20,10 @@ clean-clone rebuilds are not independent developer adoption.
   priority-50 directory access, signal/kernel-timeout errors before release,
   descriptor close/exit and suppression of late replies to subsequent requests.
 - Admission saturation fills all 32 payload slots and confirms kernel REPLY
-  states before checking timeout errors. Descriptor inheritance remains serviceable.
+  states before checking timeout errors. Read and open waiters are cancelled,
+  then unrelated default/priority-50 access and absence of stranded mutex
+  waiters are checked before releasing the original callback. Descriptor
+  inheritance remains serviceable.
 - Management probes verify kernel peer identity, root authorization, stale nonce
   rejection, bounded RPCs to a stopped process and graceful idle stop.
 - Authenticated SSHFS tests cover readonly/writable operations, 200,037-byte data,
@@ -37,6 +40,27 @@ The live-share lab also uses that isolated port and must not overlap them.
 `make check` runs host callbacks under address/undefined sanitizers and tests the
 SDK-tool crash supervisor. It is not a filesystem mount test. Source/package
 verification compiles locked upstream examples using installed pkg-config flags.
+
+## Cancelled-waiter admission regression
+
+The original saturation gate checked replies, then released the held callback.
+It missed workers still blocked on the per-file operation mutex. The stronger
+regression failed against the pre-fix ARM server: 32 cancelled clients returned,
+but an unrelated open still failed with `EAGAIN` while the callback stayed held.
+Both the read-lock and connect/open paths reproduced this admission exhaustion.
+The `cancelled-waiters-before-*-arm.txt` files preserve those expected failures.
+
+The updated read and open variants run on both architectures. While the original
+callback remains held, all clients return their expected timeout/signal errors,
+an unrelated file works at default priority and priority 50, and `pidin` shows
+no stranded mutex waiters. No extra held read callback is entered. See
+`cancelled-waiters-arm.txt` and `cancelled-waiters-x86.txt`.
+
+This reclaims cancelled requests waiting for an operation lock. Requests already
+executing foreign callbacks retain their slots, locks and buffers until those
+callbacks return. Many independently stalled callbacks can still exhaust the
+finite budget. This is not a claim of unlimited availability under arbitrary
+filesystem failures or isolation for namespace mutations.
 
 ## Honest limits
 

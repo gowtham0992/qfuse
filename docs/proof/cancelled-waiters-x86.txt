@@ -1,0 +1,15 @@
+Privately staged target libraries: libc.so.6, libffi.so.9, libgcc_s.so.1, libglib-2.0.so.0, libgthread-2.0.so.0, libiconv.so.1, libintl.so.1, libm.so.3, libsocket.so.4
+QFuse: mounted /qfuse-load (read-only, dispatch pending)
+QFuse: serving with 4 minimum receiver(s); concurrent callbacks, per-file operation locking
+PASS saturation precondition: all 32 admitted read clients are kernel REPLY-blocked while one callback is held
+PASS all 32 read waits return ETIMEDOUT before callback release, within the functional deadline
+PASS cancelled-waiter regression: unrelated file works at priority 10 before callback release
+PASS cancelled-waiter regression: unrelated file works at priority 50 before callback release
+PASS cancelled workers leave mutex waits without entering another held callback
+QFuse: mounted /qfuse-load (read-only, dispatch pending)
+QFuse: serving with 4 minimum receiver(s); concurrent callbacks, per-file operation locking
+PASS saturation precondition: all 32 admitted read clients are kernel REPLY-blocked while one callback is held
+PASS all 32 read/open waits return EINTR before callback release, within the functional deadline
+PASS cancelled-waiter regression: unrelated file works at priority 10 before callback release
+PASS cancelled-waiter regression: unrelated file works at priority 50 before callback release
+PASS cancelled workers leave mutex waits without entering another held callback

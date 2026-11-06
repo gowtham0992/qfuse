@@ -441,10 +441,17 @@ static int io_open(resmgr_context_t *ctp, io_open_t *msg, iofunc_attr_t *handle,
     }
     unsigned depth = state_drop();
     waiting_begin();
-    pthread_mutex_lock(&n->operation_mutex);
+    int operation_error = operation_lock(&n->operation_mutex);
     state_restore(depth);
     waiting_end();
-    operation_node = n;
+    if (!operation_error)
+        operation_node = n;
+    if (operation_error || request_cancelled()) {
+        error = operation_error ? operation_error : ECANCELED;
+        if (created)
+            qf_release(&r, path, &created_fi);
+        goto done;
+    }
     result = qf_getattr(&r, path, &st, created ? &created_fi : NULL);
     if (result < 0) {
         error = -result;
@@ -1069,7 +1076,7 @@ static int run_loop(struct fuse *f, unsigned workers)
     f->running = 1;
     fprintf(
         stderr,
-        "QFuse: serving with %u minimum receiver(s); concurrent callbacks, per-file I/O locking\n",
+        "QFuse: serving with %u minimum receiver(s); concurrent callbacks, per-file operation locking\n",
         workers);
     status = serve_pool(workers);
     f->running = 0;

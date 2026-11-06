@@ -18,14 +18,18 @@ transport is involved.
 ## Locking and ownership
 
 SDK attribute callouts map to a recursive priority-inheriting state mutex.
-Per-file operation mutexes preserve I/O ordering across OCBs. State locks are
+Per-file operation mutexes serialize open, stat and I/O across OCBs. State locks are
 released around foreign callbacks, while the operation's namespace gate protects
 its path references. Directory fillers reenter only short protected state
 sections. No arbitrary third-party callback thread is forcibly cancelled.
 
-Namespace changes serialize under an exclusive gate. Existing-file I/O and
-metadata normally share the gate. Descriptor duplication, paging-handle setup,
-close and local controls avoid waiting on a file's data-operation mutex. Any
+Namespace changes serialize under a mount-wide exclusive gate. Existing-file
+I/O and metadata hold its shared side across callbacks. Consequently a stalled
+read blocks all namespace mutations, and a stalled namespace mutation blocks
+other payload operations on the mount. Client waits remain interruptible. The
+current namespace try-lock loop uses short sleeps; writer fairness and an
+event-driven namespace wait remain separate limitations. Descriptor duplication, paging-handle setup,
+close and local controls avoid waiting on a file's operation mutex. Any
 control path attempting a foreign callback must acquire admission and a safe
 namespace scope first.
 
@@ -41,6 +45,14 @@ unblock flag before returning the appropriate signal/timeout error. A separate
 monitor provides a receiver-independent fallback. Requests remain registered
 until their SDK dispatch completes; cancelled contexts cannot reply to a later
 send reusing a receive ID. Private I/O buffers remain alive while callbacks run.
+
+Threads waiting for a per-file operation mutex use QNX's
+`pthread_mutex_clocklock` with short `CLOCK_MONOTONIC` deadlines. This blocks in
+the kernel with the mutex's priority-inheritance protocol, while allowing a
+cancelled waiter to unwind without acquiring the mutex. Both the OCB-dispatch
+and connect/open paths use it. A thread already inside a foreign callback keeps
+its admission slot, buffers and lock until the callback returns; these cannot be
+reclaimed safely merely because the client stopped waiting.
 
 The default admission budget reserves dispatcher capacity for descriptor and
 control work. A full budget produces backpressure rather than adding unbounded

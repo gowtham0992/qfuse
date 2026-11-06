@@ -1,0 +1,25 @@
+QFuse: mounted /data/qfuse-sshfs-mount (read-only, dispatch pending)
+QFuse: serving with 1 minimum receiver(s); concurrent callbacks, per-file I/O locking
+PASS SSHFS: 200037 remote binary bytes match a separately transferred native reference; 64 KiB pread and EOF
+PASS SSHFS: real authenticated remote greeting, directory, empty file, missing path and read-only errors
+QFuse: mounted /data/qfuse-sshfs-mount (read-only, dispatch pending)
+QFuse: serving with 1 minimum receiver(s); concurrent callbacks, per-file I/O locking
+PASS SSHFS: 200037 remote binary bytes match a separately transferred native reference; 64 KiB pread and EOF
+PASS SSHFS: real authenticated remote greeting, directory, empty file, missing path and read-only errors
+PASS SSHFS: graceful shutdown, detached path and authenticated remount
+QFuse: mounted /data/qfuse-sshfs-mount (read-only, dispatch pending)
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+@    WARNING: REMOTE HOST IDENTIFICATION HAS CHANGED!     @
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+IT IS POSSIBLE THAT SOMEONE IS DOING SOMETHING NASTY!
+Someone could be eavesdropping on you right now (man-in-the-middle attack)!
+It is also possible that a host key has just been changed.
+The fingerprint for the ED25519 key sent by the remote host is
+SHA256:yC47q9WUMAbaVc0FjypHxgnIb6OPgSCVa12qzEBXw6g.
+Please contact your system administrator.
+Add correct host key in /data/qfuse/remote_bad_known_hosts to get rid of this message.
+Offending ED25519 key in /data/qfuse/remote_bad_known_hosts:1
+Host key for [10.0.2.100]:2223 has changed and you have requested strict checking.
+Host key verification failed.
+remote host has disconnected
+PASS SSHFS negative connection: authentication failure exits and detaches the staged mount

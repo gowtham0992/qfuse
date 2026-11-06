@@ -28,7 +28,9 @@ artifacts. Any redistribution of combined executables must
 preserve the applicable upstream terms and corresponding source. MIT applies
 to original QFuse code, not to the fetched sources or combined executable.
 
-No QNX SDK, header, binary, image, or license is fetched or redistributed here.
+No QNX SDK, header, binary, image, or license is vendored or redistributed.
+Owner-authenticated SDK installation helpers operate on a separate private
+installation under the owner's applicable license.
 
 ## SSHFS dependency baseline
 

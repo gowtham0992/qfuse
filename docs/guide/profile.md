@@ -19,8 +19,8 @@ boards and independent developer reproduction require their own verification.
 The default profile admits 32 ordinary requests, retains at most 1,024 physical
 OCBs including deferred cleanup, indexes at most 8,192 namespace nodes, limits a
 directory snapshot to 1 MiB and individual data messages to 64 KiB. Larger client
-transfers use normal partial I/O. Admission exhaustion returns `EAGAIN`; physical
-OCB exhaustion returns `EMFILE`. The request pool can grow to 64 threads, leaving
+transfers use normal partial I/O. Admission exhaustion returns `EAGAIN`. New opens fail when the physical
+OCB budget is exhausted. The request pool can grow to 64 threads, leaving
 capacity for descriptor lifecycle and control messages.
 
 Callbacks on different files may run concurrently. Same-file I/O is serialized

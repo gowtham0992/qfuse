@@ -1,0 +1,37 @@
+WARNING: The requested image's platform (linux/amd64) does not match the detected host platform (linux/arm64/v8) and no specific platform was requested
+Cloning into '/home/qnx/qfuse-clean-checks/run.kOKuij/qfuse'...
+feb025afb7b350098d661305997eea4dfd7c6bb3
+PASS pristine Git checkout: no project download cache or generated build directory
+Verified 13 upstream files (fuse-3.16.2).
+Verified 7 SSHFS/dependency source files.
+cc: warning: ignoring '-pthread' as it is unnecessary for qnx
+Cross-compiled QNX x86_64 callback test: /home/qnx/qfuse-clean-checks/run.kOKuij/artifacts/build.0pgzNt/build/qnx/test-core; target execution still required.
+cc: warning: ignoring '-pthread' as it is unnecessary for qnx
+cc: warning: ignoring '-pthread' as it is unnecessary for qnx
+build/qnx/sshfs/sshfs.c: In function 'sshfs_chown':
+build/qnx/sshfs/sshfs.c:2629:33: warning: pointer targets in passing argument 1 of 'translate_id' differ in signedness [-Wpointer-sign]
+ 2629 |                 if(translate_id(&uid, sshfs.r_uid_map) == -1)
+      |                                 ^~~~
+      |                                 |
+      |                                 uid_t * {aka int *}
+build/qnx/sshfs/sshfs.c:637:42: note: expected 'uint32_t *' {aka 'unsigned int *'} but argument is of type 'uid_t *' {aka 'int *'}
+  637 | static inline int translate_id(uint32_t *id, GHashTable *map)
+      |                                ~~~~~~~~~~^~
+build/qnx/sshfs/sshfs.c:2632:34: warning: pointer targets in passing argument 1 of 'translate_id' differ in signedness [-Wpointer-sign]
+ 2632 |                 if (translate_id(&gid, sshfs.r_gid_map) == -1)
+      |                                  ^~~~
+      |                                  |
+      |                                  gid_t * {aka int *}
+build/qnx/sshfs/sshfs.c:637:42: note: expected 'uint32_t *' {aka 'unsigned int *'} but argument is of type 'gid_t *' {aka 'int *'}
+  637 | static inline int translate_id(uint32_t *id, GHashTable *map)
+      |                                ~~~~~~~~~~^~
+QFuse build infrastructure: SDK tool SIGSEGV attempt 1/5
+Built artifacts: /home/qnx/qfuse-clean-checks/run.kOKuij/artifacts/latest/build/qnx
+QFuse install prefix: /home/qnx/qfuse-clean-checks/run.kOKuij/install
+Verified unchanged upstream source: example/hello.c ad0cef7931c99dc35b0163af0273be2e708e18a781351e5142f75603e0586cb6
+Verified unchanged upstream source: example/passthrough.c ed3e85af1b37d0a356f42718de2e95cc4191a3739f3943c89859a4ca4f40f8af
+Verified unchanged upstream source: example/passthrough_helpers.h b801a2327f3056380d76993d8b12bcb8c6af9c70d6bce497b2ca3103c7c70ea9
+PASS installed package: unchanged upstream hello and passthrough link using installed fuse3 and opt-in qfuse-dirent metadata.
+PRETTY_NAME="Ubuntu 24.04.5 LTS"
+PASS fresh source rebuild and installed pkg-config examples in the reported Linux userland.
+Licensed SDK and prebuilt target GLib are shared inputs; project sources, objects and install prefix are fresh.

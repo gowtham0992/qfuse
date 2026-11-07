@@ -1,9 +1,9 @@
-Starting background filesystem at /data/qfuse-bind.7Kj6Sx/view...
-/data/qfuse-bind.7Kj6Sx/view: ready (pid 6475808)
+Starting background filesystem at /data/qfuse-bind.Qt3ipG/view...
+/data/qfuse-bind.Qt3ipG/view: ready (pid 23261207)
 Operations: 0/32; cancelled waits: 0; deferred cleanup: 0
-Stopped /data/qfuse-bind.7Kj6Sx/view
-Starting background filesystem at /data/qfuse-bind.7Kj6Sx/view...
-/data/qfuse-bind.7Kj6Sx/view: ready (pid 6533145)
+Stopped /data/qfuse-bind.Qt3ipG/view
+Starting background filesystem at /data/qfuse-bind.Qt3ipG/view...
+/data/qfuse-bind.Qt3ipG/view: ready (pid 23285783)
 Operations: 0/32; cancelled waits: 0; deferred cleanup: 0
-Stopped /data/qfuse-bind.7Kj6Sx/view
+Stopped /data/qfuse-bind.Qt3ipG/view
 PASS native bindfs: write-through, symlink/read, persistence, permission transformation, use_ino and remount

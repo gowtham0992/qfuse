@@ -71,3 +71,6 @@ qcc -V"$QFUSE_CC_VARIANT" -std=c11 -D_QNX_SOURCE -D_FILE_OFFSET_BITS=64 -g -O1 -
 
 qcc -V"$QFUSE_CC_VARIANT" -std=c11 -D_QNX_SOURCE -D_FILE_OFFSET_BITS=64 -g -O1 -Wall -Wextra -Werror -Iinclude src/mount.c -o build/qnx/qfuse-mount
 qcc -V"$QFUSE_CC_VARIANT" -std=c11 -D_QNX_SOURCE -D_FILE_OFFSET_BITS=64 -g -O1 -Wall -Wextra -Werror -Iinclude tests/test_admin.c -o build/qnx/test-admin
+
+qcc -V"$QFUSE_CC_VARIANT" -std=c11 -D_QNX_SOURCE -D_FILE_OFFSET_BITS=64 -g -O1 \
+    -Wall -Wextra -Werror -Itests tests/test_namespace.c -o build/qnx/test-namespace

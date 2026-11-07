@@ -29,12 +29,25 @@ file. Cancelled requests waiting for that mutex unwind and return their worker
 and admission slot; a callback already running retains its resources until it
 returns.
 
-Namespace mutations hold a mount-wide exclusive transaction gate. Any stalled
-read holds its shared side and blocks all namespace mutations. A stalled
-namespace mutation holds the exclusive side and blocks other payload operations
-across the mount. Both kinds of client wait are interruptible; namespace writer
-fairness under sustained readers is not guaranteed. `-s` preserves callback
-serialization while cancellation and administration remain separate.
+Namespace operations use bounded, queued path leases. Reads share a path;
+mutations reserve their affected path, and rename reserves source and destination
+atomically. Ancestor/descendant overlap counts as a conflict. Conflicting queued
+leases preserve arrival order, so new readers cannot continually bypass an
+already queued writer. Unrelated paths, including siblings in one directory,
+can proceed concurrently.
+
+Namespace waiters sleep on condition variables and are woken on release or
+cancellation. A queued descriptor request revalidates its node path after a
+rename. Directory reads reserve their subtree while building a snapshot; a
+conflicting child mutation can therefore wait for a slow directory callback.
+Noncanonical path spellings conservatively reserve the whole namespace. `-s`
+preserves callback serialization while cancellation and administration remain
+separate.
+
+The namespace scheduler bounds active/queued leases at 64, with up to three
+path keys of at most 4,096 bytes each; normal requests remain subject to the
+32-request admission budget. Shared locks or transports inside a third-party
+filesystem can still block otherwise independent callbacks.
 
 A cancelled client wait does not terminate the foreign callback. Private buffers,
 SDK bindings and file handles remain owned until the operation unwinds. Writes
@@ -42,10 +55,18 @@ may have an uncertain outcome after cancellation. Callers must not blindly retry
 side-effecting operations. Explicit flush/fsync errors are reported; deferred
 release cannot report errors to a descriptor that has already closed.
 
-Under pressure or while single-threaded callbacks are busy, close may return
-`EAGAIN` after deferring a flush. The descriptor is already closed; do not retry
-its numeric fd. Deferred cleanup retains the handle and attempts the pending
-flush before final release.
+With a supplied flush callback, an interrupted operation marks its open handle.
+A later close defers that flush, returns `EAGAIN`, and leaves the descriptor
+closed; do not retry its numeric fd. Deferred cleanup runs the pending flush
+before final release, after retained operations have unwound. A handle without a
+flush callback can close normally. Interruption history is shared by duplicate
+handles and lasts for that open handle's lifetime.
+
+Healthy single-threaded closes queue for their flush and report its actual
+result. Their waits remain interruptible. Multithreaded closes or admission
+pressure can also defer flush and return `EAGAIN` if a safe scope is unavailable.
+Explicit fsync and ordinary synchronous flush errors remain visible to callers;
+a deferred flush cannot report an error to an already closed descriptor.
 
 ## Boundaries
 

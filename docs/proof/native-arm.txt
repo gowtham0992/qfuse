@@ -9,6 +9,9 @@ Callback test platform: QNX 8.0.0 QEMU_virt
 PASS upstream hello: options, init, metadata, listing, open, reads, errors, shutdown
 PASS core: caller context isolation, lifecycle, missing callbacks, oversized replies
 CALLBACK TESTS ONLY: no filesystem mount has been verified in this run.
+PASS path gate: independent siblings, atomic rename and conflicting FIFO fairness
+PASS path gate: cancellation removes a queued writer and wakes compatible readers
+PASS path gate: hidden-name extension, alias fallback, resource bounds and empty teardown
 QFuse: mounted /qfuse-hello (read-only, dispatch pending)
 QFuse: serving with 4 minimum receiver(s); concurrent callbacks, per-file operation locking
 total 0
@@ -69,6 +72,16 @@ PASS unrelated path completes while read remains held
 PASS priority-50 directory listing completes while read remains held
 PASS held client returns EINTR before callback release
 PASS cancelled client closes and exits before callback release
+PASS held-callback isolation and client interruption
+QFuse: mounted /qfuse-stall (read-only, dispatch pending)
+QFuse: serving with 4 minimum receiver(s); concurrent callbacks, per-file operation locking
+PASS stall precondition: read entered held upstream callback
+PASS unrelated path completes while read remains held
+PASS priority-50 directory listing completes while read remains held
+PASS held client returns EINTR before callback release
+PASS cancelled client closes and exits before callback release
+PASS interrupted close returns EAGAIN with fd closed before starting another flush
+PASS deferred flush executes and completes after the original callback unwinds
 PASS held-callback isolation and client interruption
 QFuse: mounted /qfuse-admin-test (read-only, dispatch pending)
 QFuse: serving with 4 minimum receiver(s); concurrent callbacks, per-file operation locking
@@ -154,15 +167,15 @@ QFuse: serving with 4 minimum receiver(s); concurrent callbacks, per-file operat
 PASS native priority inheritance: client priority 20 reached the callback unchanged, with authenticated caller PID
 PASS native priority inheritance: client priority 30 reached the callback unchanged, with authenticated caller PID
      pid tid name                         prio STATE          Blocked                     
-16572437   1 data/qfuse/qfuse-priority     10r SIGWAITINFO                                
-16572437   2 data/qfuse/qfuse-priority     10r RECEIVE        2                           
-16572437   3 data/qfuse/qfuse-priority     10r NANOSLEEP                                  
-16572437   4 data/qfuse/qfuse-priority     10r CONDVAR        (0x4d1e469030)              
-16572437   5 data/qfuse/qfuse-priority     10r RECEIVE        1                           
-16572437   6 data/qfuse/qfuse-priority     10r RECEIVE        1                           
-16572437   7 data/qfuse/qfuse-priority     10r RECEIVE        1                           
-16572437   8 data/qfuse/qfuse-priority     30r RECEIVE        1                           
-16572437   9 data/qfuse/qfuse-priority     30r REPLY          122889                      
+27402261   1 data/qfuse/qfuse-priority     10r SIGWAITINFO                                
+27402261   2 data/qfuse/qfuse-priority     10r RECEIVE        2                           
+27402261   3 data/qfuse/qfuse-priority     10r NANOSLEEP                                  
+27402261   4 data/qfuse/qfuse-priority     10r CONDVAR        (0x5357066020)              
+27402261   5 data/qfuse/qfuse-priority     10r RECEIVE        1                           
+27402261   6 data/qfuse/qfuse-priority     10r RECEIVE        1                           
+27402261   7 data/qfuse/qfuse-priority     10r RECEIVE        1                           
+27402261   8 data/qfuse/qfuse-priority     30r RECEIVE        1                           
+27402261   9 data/qfuse/qfuse-priority     30r REPLY          122889                      
 PASS QNX IPC priority and callback context evidence
 QFuse: mounted /qfuse-lifecycle (read-only, dispatch pending)
 QFuse: serving with 4 minimum receiver(s); concurrent callbacks, per-file operation locking
@@ -183,7 +196,7 @@ PASS recovery: remounted after daemon death and executed the same binary
 QFuse: mounted /qfuse-inflight (read-only, dispatch pending)
 QFuse: serving with 4 minimum receiver(s); concurrent callbacks, per-file operation locking
      pid tid STATE          Blocked                     
-16752662   1 REPLY          16748565                    
+27582486   1 REPLY          27578389                    
 PASS in-flight precondition: real copier is kernel REPLY-blocked inside the held passthrough read
 PASS strict death deadline: error returned from the already-blocked read before the required deadline; partial copy rejected
 QFuse: mounted /qfuse-inflight (read-only, dispatch pending)
@@ -205,3 +218,17 @@ QFuse: mounted /qfuse-pass (read-only, dispatch pending)
 QFuse: serving with 4 minimum receiver(s); concurrent callbacks, per-file operation locking
 PASS passthrough: graceful detach and remount with updated backing contents
 PASS read-only passthrough suite
+QFuse: mounted /qfuse-load (read-only, dispatch pending)
+QFuse: serving with 4 minimum receiver(s); concurrent callbacks, per-file operation locking
+PASS saturation precondition: all 32 admitted read clients are kernel REPLY-blocked while one callback is held
+PASS all 32 read waits return ETIMEDOUT before callback release, within the functional deadline
+PASS cancelled-waiter regression: unrelated file works at priority 10 before callback release
+PASS cancelled-waiter regression: unrelated file works at priority 50 before callback release
+PASS cancelled workers leave mutex waits without entering another held callback
+QFuse: mounted /qfuse-load (read-only, dispatch pending)
+QFuse: serving with 4 minimum receiver(s); concurrent callbacks, per-file operation locking
+PASS saturation precondition: all 32 admitted read clients are kernel REPLY-blocked while one callback is held
+PASS all 32 read/open waits return EINTR before callback release, within the functional deadline
+PASS cancelled-waiter regression: unrelated file works at priority 10 before callback release
+PASS cancelled-waiter regression: unrelated file works at priority 50 before callback release
+PASS cancelled workers leave mutex waits without entering another held callback

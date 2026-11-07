@@ -1,0 +1,7 @@
+QFuse: mounted /qfuse-namespace (read-write, dispatch pending)
+QFuse: serving with 4 minimum receiver(s); concurrent callbacks, per-file operation locking
+PASS namespace precondition: rename callback is held
+PASS cleanup precondition: independently opened handle closes while rename stays held
+PASS independent mkdir/create/write/rename/read/unlink at priority 0 while rename stays held
+PASS independent mkdir/create/write/rename/read/unlink at priority 50 while rename stays held
+FAIL namespace line 344: released (Resource temporarily unavailable)

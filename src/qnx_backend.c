@@ -47,6 +47,7 @@ struct node {
 struct open_handle {
     struct fuse_file_info fi;
     unsigned refs;
+    _Atomic int interrupted;
     int opened, deferred_flush;
 };
 struct open_file {
@@ -106,8 +107,10 @@ static pthread_cond_t release_ready = PTHREAD_COND_INITIALIZER;
 static struct open_file *release_head, *release_tail;
 static int release_stop;
 static unsigned release_count, release_active;
+static uint64_t release_epoch;
 static _Atomic unsigned admin_phase;
 static void stop_release_worker(pthread_t);
+#include "path_gate.inc"
 #include "qnx_requests.inc"
 #include "qnx_pool.inc"
 
@@ -232,6 +235,7 @@ static iofunc_ocb_t *allocate_ocb(resmgr_context_t *ctp, iofunc_attr_t *attr)
             free(f);
             return NULL;
         }
+        atomic_init(&f->handle->interrupted, 0);
         f->handle->refs = 1;
     }
     f->node->physical_ocbs++;
@@ -302,6 +306,7 @@ static void drain_closed_ocbs(void)
         release_tail = f;
         release_count++;
     }
+    release_epoch++;
     pthread_cond_signal(&release_ready);
     pthread_mutex_unlock(&release_mutex);
 }
@@ -310,34 +315,62 @@ static void *release_worker(void *unused)
     (void)unused;
     for (;;) {
         pthread_mutex_lock(&release_mutex);
-        while (!release_head && !release_stop)
-            pthread_cond_wait(&release_ready, &release_mutex);
-        struct open_file *f = release_head;
-        if (f) {
-            release_head = f->next_free;
-            if (!release_head)
-                release_tail = NULL;
-            release_count--;
-            release_active = 1;
-        }
-        int done = !f && release_stop;
+        uint64_t observed = release_epoch;
+        unsigned attempts = release_count;
         pthread_mutex_unlock(&release_mutex);
-        if (done)
-            return NULL;
-        if (pool_serial)
-            pthread_rwlock_wrlock(&namespace_gate);
-        else
-            pthread_rwlock_rdlock(&namespace_gate);
-        namespace_depth++;
-        namespace_exclusive = pool_serial;
-        state_lock();
-        free_ocb_actual(&f->base);
-        state_unlock();
-        namespace_exclusive = 0;
-        namespace_depth--;
-        pthread_rwlock_unlock(&namespace_gate);
+        struct open_file *f = NULL;
+        while (attempts--) {
+            pthread_mutex_lock(&release_mutex);
+            struct open_file *candidate = release_head;
+            if (candidate) {
+                release_head = candidate->next_free;
+                if (!release_head)
+                    release_tail = NULL;
+                candidate->next_free = NULL;
+                release_count--;
+                release_active = 1;
+            }
+            pthread_mutex_unlock(&release_mutex);
+            if (!candidate)
+                break;
+            /* A namespace wait is not a foreign callback. Do not let one
+             * blocked path retain the worker needed by unrelated releases. */
+            int e = namespace_node(candidate->node, -1, 0);
+            if (!e) {
+                f = candidate;
+                break;
+            }
+            if (e != EBUSY && e != EAGAIN && e != ENOMEM)
+                abort();
+            pthread_mutex_lock(&release_mutex);
+            if (release_tail)
+                release_tail->next_free = candidate;
+            else
+                release_head = candidate;
+            release_tail = candidate;
+            release_count++;
+            release_active = 0;
+            pthread_mutex_unlock(&release_mutex);
+        }
+        if (f) {
+            state_lock();
+            free_ocb_actual(&f->base);
+            state_unlock();
+            namespace_leave();
+            pthread_mutex_lock(&release_mutex);
+            release_active = 0;
+            pthread_mutex_unlock(&release_mutex);
+            continue;
+        }
         pthread_mutex_lock(&release_mutex);
-        release_active = 0;
+        if (!release_head && release_stop) {
+            pthread_mutex_unlock(&release_mutex);
+            return NULL;
+        }
+        /* Queue arrival and namespace wakeups increment the epoch while
+         * holding this mutex, closing the scan-to-sleep lost-wakeup race. */
+        if (release_epoch == observed)
+            pthread_cond_wait(&release_ready, &release_mutex);
         pthread_mutex_unlock(&release_mutex);
     }
 }
@@ -345,6 +378,7 @@ static void stop_release_worker(pthread_t worker)
 {
     pthread_mutex_lock(&release_mutex);
     release_stop = 1;
+    release_epoch++;
     pthread_cond_signal(&release_ready);
     pthread_mutex_unlock(&release_mutex);
     pthread_join(worker, NULL);
@@ -778,6 +812,25 @@ static int io_close(resmgr_context_t *ctp, void *reserved, iofunc_ocb_t *base)
     }
 REJECT_IO(io_lock, io_lock_t, ENOSYS)
 REJECT_IO(io_acl, io_acl_t, ENOSYS)
+
+static int namespace_connect(resmgr_context_t *c)
+{
+    if (c->info.srcmsglen < (ssize_t)offsetof(struct _io_connect, path))
+        return EINVAL;
+    char path[4097], from[4097];
+    int e = connect_path(c, &c->msg->connect, path);
+    if (e)
+        return e;
+    const char *paths[] = {path, from};
+    unsigned count = 1;
+    if (c->msg->connect.subtype == _IO_CONNECT_RENAME) {
+        e = extra_path(c, &c->msg->connect, from, 1);
+        if (e)
+            return e;
+        count = 2;
+    }
+    return namespace_enter(paths, count, namespace_mutation(c), 1);
+}
 
 #include "qnx_guards.inc"
 #include "qnx_admin.inc"

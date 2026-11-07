@@ -78,28 +78,16 @@ static int pool_handler(dispatch_context_t *ctp)
     pending = &r;
     pthread_mutex_unlock(&pending_mutex);
     current_request = &r;
-    int writer = namespace_mutation(c), e = 0;
-    waiting_begin();
-    while (!control && ((e = writer ? pthread_rwlock_trywrlock(&namespace_gate)
-                                    : pthread_rwlock_tryrdlock(&namespace_gate)) != 0)) {
-        if (request_cancelled() || (e != EBUSY && e != EAGAIN))
-            break;
-        struct timespec pause = {0, 1000000};
-        nanosleep(&pause, NULL);
-    }
-    waiting_end();
+    int e = 0;
+    if (!control && c->msg->type == _IO_CONNECT)
+        e = namespace_connect(c);
     int result;
     if (e || request_cancelled()) {
         if (!request_cancelled())
             MsgError(c->rcvid, e);
-        if (!e && !control)
-            pthread_rwlock_unlock(&namespace_gate);
+        namespace_leave();
         result = 0;
     } else {
-        if (!control) {
-            namespace_depth++;
-            namespace_exclusive = writer;
-        }
         dispatching++;
         result = dispatch_handler(ctp);
         dispatching--;
@@ -114,11 +102,7 @@ static int pool_handler(dispatch_context_t *ctp)
     pthread_mutex_unlock(&pending_mutex);
     current_request = NULL;
     drain_closed_ocbs();
-    if (!e && namespace_depth) {
-        namespace_exclusive = 0;
-        namespace_depth--;
-        pthread_rwlock_unlock(&namespace_gate);
-    }
+    namespace_leave();
     return result;
 }
 /* A receiver-independent fallback handles kernel unblock flags even when all

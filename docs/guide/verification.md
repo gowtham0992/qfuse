@@ -27,13 +27,27 @@ clean-clone rebuilds are not independent developer adoption.
 - Management probes verify kernel peer identity, root authorization, stale nonce
   rejection, bounded RPCs to a stopped process and graceful idle stop.
 - Authenticated SSHFS tests cover readonly/writable operations, 200,037-byte data,
-  larger partial I/O, wrong-host-key rejection and persisted remount.
+  larger partial I/O, wrong-host-key rejection, eight concurrent namespace
+  clients and persisted remount.
+- Namespace probes hold a read, mkdir or rename callback while sibling
+  mkdir/create/write/rename/read/unlink workflows finish at default priority and
+  priority 50. Queued condition waits are cancelled before the holder returns;
+  queued descriptor reads survive parent rename; a queued truncate writer runs
+  before a later reader observes EOF. An independently opened handle is closed
+  during a held rename, and an unrelated release callback must still complete.
+  Graceful stop preserves the active callback and queued reader until explicit
+  release, then drains safely. Healthy serialized closes wait for their flush;
+  supplied flush errors propagate. After interrupted I/O, close defers a
+  deliberately stalled flush, returns `EAGAIN` with the fd demonstrably closed,
+  and the flush executes and completes later in cleanup. The portable scheduler's FIFO/cancellation,
+  atomic reservation, alias fallback and resource bounds also run on the host
+  and QNX.
 - The live workflow executes ELF binaries through SSHFS, changes laptop-side
   source/build output without target deployment copying, pauses SFTP, interrupts
   a reader, queries independent control, force-stops and remounts.
 
 Reproduction on a prepared native target uses `scripts/run-conformance.sh` modes
-`--local`, `--full`, `--stall`, `--saturation`, `--readonly-sshfs` and
+`--local`, `--full`, `--stall`, `--saturation`, `--namespace`, `--readonly-sshfs` and
 `--writable-sshfs`. The SFTP fixture profiles share a port and must run separately.
 The live-share lab also uses that isolated port and must not overlap them.
 
@@ -60,7 +74,7 @@ This reclaims cancelled requests waiting for an operation lock. Requests already
 executing foreign callbacks retain their slots, locks and buffers until those
 callbacks return. Many independently stalled callbacks can still exhaust the
 finite budget. This is not a claim of unlimited availability under arbitrary
-filesystem failures or isolation for namespace mutations.
+filesystem failures or unlimited progress when shared backing dependencies are stalled.
 
 ## Honest limits
 
@@ -100,3 +114,19 @@ Public host CI has passed. The [upstream recipe PR](https://github.com/qnx-ports
 is open, and [independent reproduction](https://github.com/gowtham0992/qfuse/issues/1)
 is requested. Neither an open PR nor the author's own extra userland build is
 an accepted contribution or an independent user result.
+
+## Current source and native package
+
+`core-builds.json` records the core source hashes of the current native builds.
+`namespace-arm.txt` and `namespace-x86.txt` cover scoped transactions, cancellation,
+cleanup independence, writer ordering, graceful shutdown and close/flush error
+handling. The `namespace-before`, `namespace-cleanup-before`, `serial-close-before`
+and `interrupted-close-before` records are expected negative controls on earlier
+builds. Historical walkthroughs and clone records retain their original scope.
+
+`native-sdk-build.txt` summarizes conventional QNX make build/staging, installed
+pkg-config checks, header-only installation and safe uninstall. The
+`native-sdk-runtime-*` records run the named 51-case oracle using unchanged
+passthrough linked from that installed native package, on each QEMU guest.
+The proposed upstream SDK workflow is a compile/package job; it is not a claim
+that public GitHub CI has booted QNX or that a maintainer has approved the job.

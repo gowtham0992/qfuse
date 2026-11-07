@@ -1,0 +1,4 @@
+QFuse: mounted /qfuse-namespace (read-write, dispatch pending)
+QFuse: serving with 1 minimum receiver(s); concurrent callbacks, per-file operation locking
+PASS namespace precondition: rename callback is held
+FAIL namespace line 337: !atomic_load(&shared->closer.done) && now() < end (Resource temporarily unavailable)

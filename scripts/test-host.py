@@ -3,9 +3,7 @@
 
 This is an in-process callback test. It does NOT mount a filesystem.
 """
-import hashlib
 import argparse
-import json
 import os
 import shlex
 import subprocess
@@ -17,24 +15,7 @@ arguments = argparse.ArgumentParser(description=__doc__)
 arguments.add_argument('--qnx', action='store_true', help='cross-compile with qcc; do not run the target executable on the host')
 args = arguments.parse_args()
 BUILD = ROOT / ('build/qnx' if args.qnx else 'build/host')
-lock = json.loads((ROOT / 'upstream.lock.json').read_text())
-for name, expected in lock['files'].items():
-    path = UPSTREAM / name
-    if not path.exists() or hashlib.sha256(path.read_bytes()).hexdigest() != expected:
-        raise SystemExit(f'Missing or changed {name}; run python3 scripts/fetch-upstream.py')
-BUILD.mkdir(parents=True, exist_ok=True)
-# No optional libfuse features enabled for this callback fixture.
-(BUILD / 'libfuse_config.h').write_text('/* Callback fixture only. */\n')
-# Port the upstream option parser by replacing private include dependencies.
-# No parser logic or upstream example is changed.
-parser = (UPSTREAM / 'lib/fuse_opt.c').read_text()
-for include in ['fuse_config.h', 'fuse_i.h', 'fuse_misc.h']:
-    old = f'#include "{include}"'
-    if parser.count(old) != 1:
-        raise SystemExit(f'Unexpected upstream include: {include}')
-    parser = parser.replace(old, '/* QFuse callback fixture: private include removed. */')
-parser = '#include "fuse_log.h"\n' + parser
-(BUILD / 'fuse_opt.c').write_text(parser)
+subprocess.run(['python3', str(ROOT/'scripts/prepare-upstream.py'), str(BUILD)], check=True)
 cc = shlex.split(os.environ.get('CC', 'qcc' if args.qnx else 'cc'))
 flags = ['-std=c11', '-D_DEFAULT_SOURCE', '-D_DARWIN_C_SOURCE', '-D_FILE_OFFSET_BITS=64',
          '-g', '-O1', '-fno-omit-frame-pointer',
@@ -69,3 +50,8 @@ subprocess.run(cc + flags + ['-Wall', '-Wextra', '-Werror', str(ROOT/'tests/test
 if not args.qnx:
     subprocess.run([str(mutation)], check=True)
     print('PASS writable core: callback state, caller context, handles, bounds and missing operations')
+
+namespace = BUILD / 'test-path-gate'
+subprocess.run(cc + flags + ['-Wall', '-Wextra', '-Werror', str(ROOT/'tests/test_path_gate.c'), '-pthread', '-o', str(namespace)], check=True)
+if not args.qnx:
+    subprocess.run([str(namespace)], check=True)

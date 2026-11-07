@@ -10,7 +10,7 @@
 #include <string.h>
 #include <errno.h>
 #include <time.h>
-static pid_t server;
+static pid_t server, clients[8];
 #define CHECK(x)                                                                                   \
     do {                                                                                           \
         if (!(x)) {                                                                                \
@@ -22,10 +22,20 @@ static pid_t server;
 static void stop(void)
 {
     if (server > 0) {
-        kill(server, SIGTERM);
+        int abandoned = 0;
+        for (unsigned i = 0; i < 8; i++)
+            abandoned |= clients[i] > 0;
+        kill(server, abandoned ? SIGKILL : SIGTERM);
         int st;
         waitpid(server, &st, 0);
         server = 0;
+    }
+    for (unsigned i = 0; i < 8; i++) {
+        if (clients[i] > 0) {
+            kill(clients[i], SIGKILL);
+            waitpid(clients[i], NULL, 0);
+            clients[i] = 0;
+        }
     }
 }
 static void timeout(int s)
@@ -33,6 +43,9 @@ static void timeout(int s)
     (void)s;
     if (server > 0)
         kill(server, SIGKILL);
+    for (unsigned i = 0; i < 8; i++)
+        if (clients[i] > 0)
+            kill(clients[i], SIGKILL);
     _exit(124);
 }
 static unsigned char sample(size_t i)
@@ -65,6 +78,49 @@ static void mount_remote(void)
         nanosleep(&t, NULL);
     }
     CHECK(!"SSHFS readiness");
+}
+static int namespace_client(unsigned index)
+{
+    char directory[256], file[320], renamed[320], data[32], back[32] = {0};
+    snprintf(directory, sizeof(directory), "/data/qfuse-write-mount/parallel-%ld-%u",
+             (long)getppid(), index);
+    snprintf(file, sizeof(file), "%s/file", directory);
+    snprintf(renamed, sizeof(renamed), "%s/renamed", directory);
+    int length = snprintf(data, sizeof(data), "client-%u", index);
+    if (mkdir(directory, 0700))
+        return -1;
+    int fd = open(file, O_CREAT | O_EXCL | O_WRONLY, 0600);
+    if (fd < 0 || write(fd, data, length) != length || close(fd))
+        return -1;
+    if (rename(file, renamed))
+        return -1;
+    fd = open(renamed, O_RDONLY);
+    if (fd < 0 || read(fd, back, sizeof(back)) != length || memcmp(back, data, length) ||
+        close(fd))
+        return -1;
+    if (unlink(renamed) || rmdir(directory))
+        return -1;
+    return 0;
+}
+static void concurrent_namespaces(void)
+{
+    for (unsigned i = 0; i < 8; i++) {
+        clients[i] = fork();
+        CHECK(clients[i] >= 0);
+        if (!clients[i]) {
+            int result = namespace_client(i);
+            if (result)
+                fprintf(stderr, "FAIL concurrent SSHFS client %u: %s\n", i, strerror(errno));
+            _exit(result ? 1 : 0);
+        }
+    }
+    for (unsigned i = 0; i < 8; i++) {
+        int status;
+        pid_t observed = waitpid(clients[i], &status, 0);
+        clients[i] = 0;
+        CHECK(observed > 0 && WIFEXITED(status) && !WEXITSTATUS(status));
+    }
+    puts("PASS SSHFS concurrent namespace: 8 clients create/write/rename/read/unlink independent files");
 }
 int main(void)
 {
@@ -123,6 +179,7 @@ int main(void)
     struct statvfs fs;
     CHECK(statvfs(dir, &fs) == 0 && fs.f_bsize > 0);
     CHECK(unlink(link) == 0);
+    concurrent_namespaces();
     stop();
     mount_remote();
     CHECK(stat(renamed, &st) == 0 && st.st_size == 12345 && (st.st_mode & 0777) == 0640 &&

@@ -134,7 +134,8 @@ static void unrelated_client(struct outcome *o, int priority)
 int main(int argc, char **argv)
 {
     int timer = argc == 2 && !strcmp(argv[1], "--timer");
-    int exiting = argc == 2 && !strcmp(argv[1], "--exit");
+    int close_stall = argc == 2 && !strcmp(argv[1], "--close-stall");
+    int exiting = close_stall || (argc == 2 && !strcmp(argv[1], "--exit"));
     CHECK(argc == 1 || timer || exiting);
     setvbuf(stdout, NULL, _IOLBF, 0);
     atexit(cleanup);
@@ -164,7 +165,10 @@ int main(int argc, char **argv)
         setenv("QFUSE_INFLIGHT_NOTIFY_FD", a, 1);
         setenv("QFUSE_INFLIGHT_RELEASE_FD", b, 1);
         setenv("QFUSE_INFLIGHT_PATH", source, 1);
-        execl("/data/qfuse/qfuse-inflight", "inflight", "-f", "-o", "ro", "/qfuse-stall", NULL);
+        if (close_stall)
+            setenv("QFUSE_HOLD_FLUSH", "1", 1);
+        const char *binary = getenv("QFUSE_INFLIGHT_BINARY");
+        execl(binary ? binary : "/data/qfuse/qfuse-inflight", "inflight", "-f", "-o", "ro", "/qfuse-stall", NULL);
         _exit(127);
     }
     for (int i = 0; i < 200; i++) {
@@ -201,9 +205,15 @@ int main(int argc, char **argv)
         if (n != -1 || saved != (timer ? ETIMEDOUT : EINTR))
             _exit(4);
         if (exiting) {
-            int closed = close(f);
-            publish(&state->second, closed, errno);
-            _exit(closed ? 6 : 0);
+            int closed = close(f), saved_close = errno;
+            int accepted = !closed;
+            if (close_stall) {
+                accepted = closed == -1 && saved_close == EAGAIN;
+                if (accepted)
+                    accepted = fcntl(f, F_GETFD) == -1 && errno == EBADF;
+            }
+            publish(&state->second, closed, saved_close);
+            _exit(accepted ? 0 : 6);
         }
         errno = 0;
         n = pread(f, b, sizeof(b), 4096);
@@ -251,7 +261,9 @@ int main(int argc, char **argv)
     int closed = 1;
     if (exiting) {
         uint64_t end = now() + 1000000000ULL;
-        closed = await(&state->second, end) && state->second.result == 0;
+        closed = await(&state->second, end) &&
+                 (close_stall ? state->second.result == -1 && state->second.error == EAGAIN
+                              : state->second.result == 0);
         int exited = 0;
         while (closed && now() < end) {
             pid_t p = waitpid(reader, &status, WNOHANG);
@@ -266,7 +278,17 @@ int main(int argc, char **argv)
         printf("%s cancelled client closes and exits before callback release\n",
                closed ? "PASS" : "FAIL");
     }
+    if (close_stall && closed) {
+        CHECK(read(notice[0], &e, sizeof(e)) == -1 && errno == EAGAIN);
+        puts("PASS interrupted close returns EAGAIN with fd closed before starting another flush");
+    }
     CHECK(write(release_hold[1], "x", 1) == 1);
+    if (close_stall && closed) {
+        CHECK(event(&e, now() + 5000000000ULL) && e.offset == -4);
+        CHECK(write(release_hold[1], "x", 1) == 1);
+        CHECK(event(&e, now() + 5000000000ULL) && e.offset == -5);
+        puts("PASS deferred flush executes and completes after the original callback unwinds");
+    }
     if (!exiting && independent && high && interrupted) {
         CHECK(event(&e, now() + 5000000000ULL));
         CHECK(e.caller == reader);

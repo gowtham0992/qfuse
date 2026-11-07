@@ -1,0 +1,4 @@
+QFuse: mounted /qfuse-namespace (read-write, dispatch pending)
+QFuse: serving with 4 minimum receiver(s); concurrent callbacks, per-file operation locking
+PASS namespace precondition: read callback is held
+FAIL namespace line 151: await(&shared->work, 3) && shared->work.result == 0 (Resource temporarily unavailable)

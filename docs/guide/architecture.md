@@ -9,6 +9,7 @@ transport is involved.
 | src/core.c | Typed callback dispatch, argument/bounds validation and request-local FUSE context. |
 | src/qnx_backend.c | Namespace nodes, OCBs, native attribute integration, reads, metadata and lifecycle. |
 | src/qnx_mutations.inc | Writable/namespace operations, symlink redirection, statfs and native controls. |
+| src/path_gate.inc | Bounded FIFO path leases, atomic multi-path reservation and cancellation wakeups. |
 | src/qnx_requests.inc | Short state locking, callback scheduling hooks, request identity and cancellation. |
 | src/qnx_pool.inc | Dispatch admission, namespace transactions, worker/monitor lifecycle and draining. |
 | src/qnx_guards.inc | Typed SDK handler boundaries and reply suppression for cancelled requests. |
@@ -23,20 +24,49 @@ released around foreign callbacks, while the operation's namespace gate protects
 its path references. Directory fillers reenter only short protected state
 sections. No arbitrary third-party callback thread is forcibly cancelled.
 
-Namespace changes serialize under a mount-wide exclusive gate. Existing-file
-I/O and metadata hold its shared side across callbacks. Consequently a stalled
-read blocks all namespace mutations, and a stalled namespace mutation blocks
-other payload operations on the mount. Client waits remain interruptible. The
-current namespace try-lock loop uses short sleeps; writer fairness and an
-event-driven namespace wait remain separate limitations. Descriptor duplication, paging-handle setup,
-close and local controls avoid waiting on a file's operation mutex. Any
-control path attempting a foreign callback must acquire admission and a safe
-namespace scope first.
+Namespace transactions reserve affected canonical paths through a private,
+portable scheduler. A read lease conflicts with an overlapping write lease;
+ancestor/descendant paths overlap, while siblings do not. Rename acquires source
+and destination in one grant. A queued conflicting writer keeps its place when
+later readers arrive. Unrelated requests can bypass that queue. Waits use
+condition variables, with wakeups on lease release or request cancellation.
+
+The former global read/write gate coupled every mutation to every in-flight
+read. Copying callback path strings alone would leave rename/open-handle
+semantics unresolved. Scoped leases protect both object identity and path
+lifetimes while permitting independent transactions. The scheduler caps its
+lease count and path-key storage; it executes no filesystem callback while its
+short mutex is held.
+
+Descriptor requests copy a node path under the state mutex, wait without that
+mutex, then revalidate the path before using it. A parent rename can therefore
+move a queued request's node safely. Hidden-name transactions make a nonblocking
+additional reservation before renaming an open file; they retain that reservation
+through rollback or commit. Final hidden cleanup obtains the appropriate write
+lease and recomputes it if the node moved while waiting.
+
+Directory snapshots reserve a subtree during collection. Noncanonical spellings
+use a conservative whole-namespace scope. Single-thread mode also uses a global
+exclusive lease. Ordinary descriptor duplication, paging-handle setup and local
+controls bypass namespace waits. Close bookkeeping bypasses the per-file
+operation mutex. Healthy single-thread closes queue for their flush; other
+control callbacks obtain a nonblocking safe scope before invoking foreign code.
+Interrupted I/O atomically marks its shared open handle before the client is
+unblocked. A later close on a handle with a flush callback defers that callback,
+reports `EAGAIN` and closes the descriptor, so cleanup cannot trap the caller in
+a second uncooperative callback. Deferred flush executes after the retained
+operation unwinds. Ordinary synchronous flush errors remain visible. Shared backend
+locks and remote transports remain possible sources of blocking.
 
 The SDK retains live message bindings. Physical OCB references also pin namespace
 nodes against garbage collection. Final releases are published only after the
-SDK dispatcher unwinds, then processed by a dedicated cleanup worker. A release
-callback cannot consume the request's old receive ID or hold an IPC receiver.
+SDK dispatcher unwinds, then processed by a dedicated cleanup worker. It tries
+queued paths without blocking, skipping namespace-conflicted jobs so unrelated
+releases can complete. Queue arrivals and namespace changes wake it through a
+condition variable and an epoch check, closing the scan-to-sleep lost-wakeup
+race. A release callback cannot consume the request's old receive ID or hold an
+IPC receiver. A foreign release callback that itself fails to return still
+retains the cleanup worker; process-level recovery remains the boundary.
 
 ## Cancellation and deadlines
 

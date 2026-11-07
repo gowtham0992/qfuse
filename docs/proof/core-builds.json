@@ -1,6 +1,5 @@
 {
   "aarch64le": {
-    "cancelled_waiter_regression_sha256": "6dad34f59360830eb3817867d2624fa04fb70699865cfbfe02f31f0af4f075c4",
     "qfuse_core_sha256": {
       "include/qfuse/admin.h": "380029b6768a61da87c4777e4963d329f0d7544d1dd64c9f02b0b777ee48889a",
       "include/qfuse/compat/dirent.h": "3e6bb29c83ffe75e6094e3af90000223e3189be4e750a618e20c01aba98676a9",
@@ -8,18 +7,18 @@
       "include/qfuse/core.h": "ee992d9524877ce891ca46dea9079eb391f3a6ec32d88f0ac2ea4124c7de1e4b",
       "src/core.c": "ae4b7f1711f081226b73917510730fb97acca375778f189815e4bb287f63acd9",
       "src/mount.c": "59e752a0f523d055a8dd15b182fbc1686b4f845083f398ea83ae6b6eecddf00c",
+      "src/path_gate.inc": "fbe79ed19b5b2aac45195dfce4efb2706cc32f0a7e8dbdb24cca55c04aea7df4",
       "src/qnx_admin.inc": "bf5b4f6df4cf9144962d4bc6aabc85eeaa7da5121abbe8b613eed74d782b2e7e",
-      "src/qnx_backend.c": "db50e7137cadba210273701b25747bf61a59f2c93e0db50c64aa1f7f40a7dfbd",
+      "src/qnx_backend.c": "ec64aecf3002cb03e0da9c72c684e7deee6557f271799616e34ebe3b79a91c73",
       "src/qnx_guards.inc": "f9a645056731d15151dd0df2bba39f84024d4bfa7e7d8254afb688d69bad9d4a",
-      "src/qnx_mutations.inc": "2d3cadf6820ee3f1fd7a567081f98fb2469a977cf542b308006196d4dd2f5787",
-      "src/qnx_pool.inc": "93a1ec3a94c9d32620d499656cdf540f58510269e0b9294ca1cd3ed2d16d2747",
-      "src/qnx_requests.inc": "c167022234184e375b195d824e03980b5dc1bea9f50745cc99b805fe40d9c6d5",
+      "src/qnx_mutations.inc": "5ef07a359cae2a664d02ae01b845143f07840dacdcc7df38f5bd286caa6d3c03",
+      "src/qnx_pool.inc": "320252050c3bcafaa6ee3b74281663bc1499f1244d460392646947fd3c016905",
+      "src/qnx_requests.inc": "a8763ede69735f6cd1d21ce18c0a9949eaf23245bd3d1f292c6ae2771c76eee6",
       "src/unmount.c": "a58abaa734a91740d8d9b90e688cec9f9d45f618f9e5dab224096155af4d44cb"
     },
-    "scope": "QFuse core and regression sources only; SDK/runtime, dependency binaries and build host are private inputs."
+    "scope": "QFuse core sources only; selected current namespace/conformance evidence is in namespace-arm.txt and native-arm.txt. Historical recordings and earlier negative controls use their recorded builds. SDK/runtime and dependencies remain private inputs."
   },
   "x86_64": {
-    "cancelled_waiter_regression_sha256": "6dad34f59360830eb3817867d2624fa04fb70699865cfbfe02f31f0af4f075c4",
     "qfuse_core_sha256": {
       "include/qfuse/admin.h": "380029b6768a61da87c4777e4963d329f0d7544d1dd64c9f02b0b777ee48889a",
       "include/qfuse/compat/dirent.h": "3e6bb29c83ffe75e6094e3af90000223e3189be4e750a618e20c01aba98676a9",
@@ -27,14 +26,15 @@
       "include/qfuse/core.h": "ee992d9524877ce891ca46dea9079eb391f3a6ec32d88f0ac2ea4124c7de1e4b",
       "src/core.c": "ae4b7f1711f081226b73917510730fb97acca375778f189815e4bb287f63acd9",
       "src/mount.c": "59e752a0f523d055a8dd15b182fbc1686b4f845083f398ea83ae6b6eecddf00c",
+      "src/path_gate.inc": "fbe79ed19b5b2aac45195dfce4efb2706cc32f0a7e8dbdb24cca55c04aea7df4",
       "src/qnx_admin.inc": "bf5b4f6df4cf9144962d4bc6aabc85eeaa7da5121abbe8b613eed74d782b2e7e",
-      "src/qnx_backend.c": "db50e7137cadba210273701b25747bf61a59f2c93e0db50c64aa1f7f40a7dfbd",
+      "src/qnx_backend.c": "ec64aecf3002cb03e0da9c72c684e7deee6557f271799616e34ebe3b79a91c73",
       "src/qnx_guards.inc": "f9a645056731d15151dd0df2bba39f84024d4bfa7e7d8254afb688d69bad9d4a",
-      "src/qnx_mutations.inc": "2d3cadf6820ee3f1fd7a567081f98fb2469a977cf542b308006196d4dd2f5787",
-      "src/qnx_pool.inc": "93a1ec3a94c9d32620d499656cdf540f58510269e0b9294ca1cd3ed2d16d2747",
-      "src/qnx_requests.inc": "c167022234184e375b195d824e03980b5dc1bea9f50745cc99b805fe40d9c6d5",
+      "src/qnx_mutations.inc": "5ef07a359cae2a664d02ae01b845143f07840dacdcc7df38f5bd286caa6d3c03",
+      "src/qnx_pool.inc": "320252050c3bcafaa6ee3b74281663bc1499f1244d460392646947fd3c016905",
+      "src/qnx_requests.inc": "a8763ede69735f6cd1d21ce18c0a9949eaf23245bd3d1f292c6ae2771c76eee6",
       "src/unmount.c": "a58abaa734a91740d8d9b90e688cec9f9d45f618f9e5dab224096155af4d44cb"
     },
-    "scope": "QFuse core and regression sources only; SDK/runtime, dependency binaries and build host are private inputs."
+    "scope": "QFuse core sources only; selected current namespace/conformance evidence is in namespace-x86.txt and native-x86.txt. Historical recordings and earlier negative controls use their recorded builds. SDK/runtime and dependencies remain private inputs."
   }
 }

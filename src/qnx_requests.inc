@@ -18,11 +18,13 @@ static pthread_once_t state_once = PTHREAD_ONCE_INIT;
 static int state_error;
 static _Thread_local unsigned state_depth;
 static pthread_mutex_t pending_mutex = PTHREAD_MUTEX_INITIALIZER;
-static pthread_rwlock_t namespace_gate = PTHREAD_RWLOCK_INITIALIZER;
+static struct qf_path_gate namespace_gate;
+static _Thread_local struct qf_path_lease namespace_lease;
 struct pending_request {
     rcvid_t rcvid;
     resmgr_context_t *context;
-    int waiting, interrupt_requested, payload;
+    int waiting, interrupt_requested, payload, close_wait;
+    struct open_handle *handle;
     _Atomic int cancelled;
     struct pending_request *next;
 };
@@ -46,6 +48,8 @@ static int init_recursive_mutex(pthread_mutex_t *mutex)
 static void init_state_mutex(void)
 {
     state_error = init_recursive_mutex(&state_mutex);
+    if (!state_error)
+        state_error = qf_gate_init(&namespace_gate);
 }
 static void state_lock(void)
 {
@@ -78,11 +82,32 @@ static int request_cancelled(void)
 {
     return current_request && atomic_load(&current_request->cancelled);
 }
+static void request_handle(struct open_handle *handle)
+{
+    if (!current_request)
+        return;
+    pthread_mutex_lock(&pending_mutex);
+    current_request->handle = handle;
+    if (atomic_load(&current_request->cancelled))
+        atomic_store(&handle->interrupted, 1);
+    pthread_mutex_unlock(&pending_mutex);
+}
+static void namespace_changed(void)
+{
+    pthread_mutex_lock(&release_mutex);
+    release_epoch++;
+    pthread_cond_signal(&release_ready);
+    pthread_mutex_unlock(&release_mutex);
+}
 static void cancel_waiter(struct pending_request *r)
 {
     if (!atomic_load(&r->cancelled)) {
         atomic_store(&r->cancelled, 1);
+        if (r->handle)
+            atomic_store(&r->handle->interrupted, 1);
         cancelled_requests++;
+        qf_gate_notify(&namespace_gate);
+        namespace_changed();
         /* -1 asks the kernel to select EINTR or ETIMEDOUT for this unblock. */
         MsgError(r->rcvid, -1);
     }
@@ -127,17 +152,79 @@ static int claim_payload(void)
     pthread_mutex_unlock(&pending_mutex);
     return available;
 }
-static int borrow_namespace(void)
+static int namespace_cancelled(void *p)
+{
+    struct pending_request *r = p;
+    return r && (atomic_load(&r->cancelled) ||
+                 (r->close_wait && r->handle && atomic_load(&r->handle->interrupted)));
+}
+static int namespace_enter(const char *const *paths, unsigned count, int exclusive, int wait)
 {
     if (namespace_depth)
-        return 1;
-    int e = pool_serial ? pthread_rwlock_trywrlock(&namespace_gate)
-                        : pthread_rwlock_tryrdlock(&namespace_gate);
-    if (e)
         return 0;
-    namespace_depth = 1;
-    namespace_exclusive = pool_serial;
-    return 1;
+    const char *serial[] = {"/"};
+    if (pool_serial) {
+        paths = serial;
+        count = 1;
+        exclusive = 1;
+    }
+    waiting_begin();
+    unsigned depth = wait ? state_drop() : 0;
+    int e = qf_gate_enter(&namespace_gate, &namespace_lease, paths, count, exclusive,
+                          namespace_cancelled, current_request, wait);
+    if (wait)
+        state_restore(depth);
+    waiting_end();
+    if (wait && e)
+        namespace_changed();
+    if (!e) {
+        namespace_depth = 1;
+        namespace_exclusive = exclusive;
+    }
+    return e;
+}
+static void namespace_leave(void)
+{
+    if (!namespace_depth)
+        return;
+    namespace_depth = 0;
+    namespace_exclusive = 0;
+    qf_gate_leave(&namespace_gate, &namespace_lease);
+    namespace_changed();
+}
+/* Node paths may move while a request sleeps behind rename. Physical OCB
+ * references pin the node; copy its path under state, acquire the lease, then
+ * revalidate before any callback sees that path. */
+static int namespace_node(struct node *n, int exclusive, int wait)
+{
+    if (namespace_depth)
+        return 0;
+    for (;;) {
+        state_lock();
+        char path[4097];
+        strcpy(path, n->path);
+        const char *paths[] = {path};
+        int mode = exclusive < 0 ? n->hidden && n->physical_ocbs == 1 : exclusive;
+        int e = namespace_enter(paths, 1, mode, wait);
+        if (e) {
+            state_unlock();
+            return e;
+        }
+        int same = !strcmp(path, n->path) &&
+                   (exclusive >= 0 || mode == (n->hidden && n->physical_ocbs == 1));
+        state_unlock();
+        if (same)
+            return 0;
+        namespace_leave();
+        if (!wait)
+            return EAGAIN;
+    }
+}
+static int namespace_connect(resmgr_context_t *);
+static int borrow_namespace(void)
+{
+    const char *paths[] = {"/"};
+    return !namespace_enter(paths, 1, 0, 0);
 }
 static int callback_pause(unsigned *depth)
 {
@@ -240,11 +327,15 @@ static int operation_lock(pthread_mutex_t *mutex)
 }
 static int lock_ocb(resmgr_context_t *c, void *v, iofunc_ocb_t *o)
 {
+    request_handle(((struct open_file *)o)->handle);
     waiting_begin();
     struct node *n = (struct node *)o->attr;
     int e = 0;
     if (current_request && current_request->payload) {
-        e = operation_lock(&n->operation_mutex);
+        e = namespace_node(n, 0, 1);
+        waiting_begin();
+        if (!e)
+            e = operation_lock(&n->operation_mutex);
         if (!e)
             operation_owner = n;
     }

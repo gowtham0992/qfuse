@@ -1,0 +1,8 @@
+QFuse: mounted /qfuse-stall (read-only, dispatch pending)
+QFuse: serving with 4 minimum receiver(s); concurrent callbacks, per-file operation locking
+PASS stall precondition: read entered held upstream callback
+PASS unrelated path completes while read remains held
+PASS priority-50 directory listing completes while read remains held
+PASS held client returns EINTR before callback release
+FAIL cancelled client closes and exits before callback release
+FAIL stall line 301: independent && high && interrupted && closed errno=11

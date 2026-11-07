@@ -4,6 +4,7 @@
 #include <sys/stat.h>
 #include <sys/wait.h>
 #include <dirent.h>
+#include <sched.h>
 #include <errno.h>
 #include <fcntl.h>
 #include <signal.h>
@@ -112,7 +113,12 @@ static void check_mount(void)
     CHECK(!strcmp(message, "QFuse SSHFS over authenticated SSH\n"));
     CHECK(close(fd) == 0);
     fd = open("/data/qfuse-sshfs-mount/empty", O_RDONLY); CHECK(fd >= 0);
-    CHECK(read(fd, message, sizeof(message)) == 0 && close(fd) == 0);
+    ssize_t eof = read(fd, message, sizeof(message));
+    int read_error = errno, closed = close(fd), close_error = errno;
+    if (eof || closed)
+        fprintf(stderr, "EOF/close diagnostic: read=%ld errno=%d close=%d errno=%d\n",
+                (long)eof, read_error, closed, close_error);
+    CHECK(eof == 0 && closed == 0);
     DIR *dir = opendir(mountpoint); CHECK(dir);
     int found = 0; errno = 0;
     struct dirent *entry;
@@ -150,10 +156,26 @@ int main(int argc, char **argv)
         alarm(0); return 0;
     }
     CHECK(argc == 1);
-    wait_ready(); check_mount(); stop_server();
+    wait_ready();
+    int high = getenv("QFUSE_TEST_HIGH_PRIORITY") != NULL;
+    struct sched_param original;
+    int policy = sched_getscheduler(0);
+    CHECK(policy != -1 && !sched_getparam(0, &original));
+    if (high) {
+        struct sched_param priority = {.sched_priority = 50};
+        CHECK(!sched_setscheduler(0, SCHED_RR, &priority));
+    }
+    check_mount(); stop_server();
+    CHECK(!sched_setscheduler(0, policy, &original));
     struct stat st;
     CHECK(stat("/data/qfuse-sshfs-mount/greeting.txt", &st) == -1 && errno == ENOENT);
-    start_server(); wait_ready(); check_mount(); stop_server();
+    start_server(); wait_ready();
+    if (high) {
+        struct sched_param priority = {.sched_priority = 50};
+        CHECK(!sched_setscheduler(0, SCHED_RR, &priority));
+    }
+    check_mount(); stop_server();
+    CHECK(!sched_setscheduler(0, policy, &original));
     CHECK(rmdir(mountpoint) == 0);
     alarm(0);
     puts("PASS SSHFS: graceful shutdown, detached path and authenticated remount");

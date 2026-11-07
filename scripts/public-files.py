@@ -4,7 +4,7 @@ from pathlib import Path
 ROOT_FILES = ('LICENSE','README.md','THIRD_PARTY.md','Makefile','Dockerfile.dev','Dockerfile.verify',
               'Dockerfile.target','Dockerfile.share','.gitignore','.gitattributes','.dockerignore',
               '.clang-format','upstream.lock.json','sshfs-dependencies.lock.json','bindfs.lock.json')
-EXTENSIONS={'.c','.h','.inc','.py','.sh','.patch','.md','.txt','.cast','.json','.tsv','.yml','.yaml'}
+EXTENSIONS={'.c','.h','.inc','.py','.sh','.patch','.md','.txt','.cast','.json','.tsv','.yml','.yaml','.mk'}
 
 def public_files(root:Path):
     files=[]

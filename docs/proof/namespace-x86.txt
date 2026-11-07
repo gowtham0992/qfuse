@@ -1,0 +1,52 @@
+QFuse: mounted /qfuse-namespace (read-write, dispatch pending)
+QFuse: serving with 4 minimum receiver(s); concurrent callbacks, per-file operation locking
+PASS namespace precondition: read callback is held
+PASS independent mkdir/create/write/rename/read/unlink at priority 0 while read stays held
+PASS independent mkdir/create/write/rename/read/unlink at priority 50 while read stays held
+PASS scoped namespace isolation and cleanup
+QFuse: mounted /qfuse-namespace (read-write, dispatch pending)
+QFuse: serving with 4 minimum receiver(s); concurrent callbacks, per-file operation locking
+PASS namespace precondition: mkdir callback is held
+PASS independent mkdir/create/write/rename/read/unlink at priority 0 while mkdir stays held
+PASS independent mkdir/create/write/rename/read/unlink at priority 50 while mkdir stays held
+PASS scoped namespace isolation and cleanup
+QFuse: mounted /qfuse-namespace (read-write, dispatch pending)
+QFuse: serving with 4 minimum receiver(s); concurrent callbacks, per-file operation locking
+PASS namespace precondition: rename callback is held
+PASS cleanup precondition: independently opened handle closes while rename stays held
+PASS independent mkdir/create/write/rename/read/unlink at priority 0 while rename stays held
+PASS independent mkdir/create/write/rename/read/unlink at priority 50 while rename stays held
+PASS unrelated release callback completes while parent rename stays held
+PASS rename precondition: descriptor reader is queued on a namespace condition
+PASS namespace condition wait cancels and its worker unwinds before rename returns
+PASS rename precondition: descriptor reader is queued on a namespace condition
+PASS queued descriptor read survives parent rename
+PASS scoped namespace isolation and cleanup
+QFuse: mounted /qfuse-namespace (read-write, dispatch pending)
+QFuse: serving with 4 minimum receiver(s); concurrent callbacks, per-file operation locking
+PASS namespace precondition: fair callback is held
+PASS independent mkdir/create/write/rename/read/unlink at priority 0 while fair stays held
+PASS independent mkdir/create/write/rename/read/unlink at priority 50 while fair stays held
+PASS fairness precondition: writer and later reader are queued behind held read
+PASS queued truncate writer runs before a later reader observes EOF
+PASS scoped namespace isolation and cleanup
+QFuse: mounted /qfuse-namespace (read-write, dispatch pending)
+QFuse: serving with 4 minimum receiver(s); concurrent callbacks, per-file operation locking
+PASS namespace precondition: rename callback is held
+PASS cleanup precondition: independently opened handle closes while rename stays held
+PASS independent mkdir/create/write/rename/read/unlink at priority 0 while rename stays held
+PASS independent mkdir/create/write/rename/read/unlink at priority 50 while rename stays held
+PASS unrelated release callback completes while parent rename stays held
+PASS rename precondition: descriptor reader is queued on a namespace condition
+PASS namespace condition wait cancels and its worker unwinds before rename returns
+PASS rename precondition: descriptor reader is queued on a namespace condition
+PASS graceful stop retains the active callback and queued reader until release
+PASS queued descriptor read survives parent rename
+PASS scoped namespace isolation and cleanup
+QFuse: mounted /qfuse-namespace (read-write, dispatch pending)
+QFuse: serving with 1 minimum receiver(s); concurrent callbacks, per-file operation locking
+PASS namespace precondition: rename callback is held
+PASS ordinary single-thread close queues safely and reports successful flush
+QFuse: mounted /qfuse-namespace (read-write, dispatch pending)
+QFuse: serving with 1 minimum receiver(s); concurrent callbacks, per-file operation locking
+PASS synchronous close preserves filesystem flush errors and closes the descriptor

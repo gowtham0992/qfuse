@@ -18,7 +18,7 @@ reference=Path('/srv/qfuse-sftp/data/nested/binary.dat')
 if reference.is_file():shutil.copyfile(reference,stage/'reference-binary.dat')
 PY
 bash scripts/target-exec.sh 'mkdir -p /data/qfuse/lib && chmod 700 /data/qfuse /data/qfuse/lib'
-bash scripts/target-copy.sh "$build"/qfuse-{mount,hello,context,passthrough,sshfs,unmount,priority,inflight} "$build"/test-{dependencies,admin,stall-load,stall,passthrough-plus,dirent-adapter,operation-report,inflight-death,abi,mount-identity,core,mutation-core,mount,passthrough,conformance,lifecycle,write-permissions,concurrency,priority,sshfs,sshfs-write} "$build/exec-probe" /data/qfuse/
+bash scripts/target-copy.sh "$build"/qfuse-{mount,hello,context,passthrough,sshfs,unmount,priority,inflight} "$build"/test-{namespace,path-gate,dependencies,admin,stall-load,stall,passthrough-plus,dirent-adapter,operation-report,inflight-death,abi,mount-identity,core,mutation-core,mount,passthrough,conformance,lifecycle,write-permissions,concurrency,priority,sshfs,sshfs-write} "$build/exec-probe" /data/qfuse/
 bash scripts/target-copy.sh $QFUSE_TARGET_DIR/runtime/* /data/qfuse/lib
 bash scripts/target-copy.sh /home/qnx/qfuse-completion-stage/* /data/qfuse/
 bash scripts/target-exec.sh 'for fixture_key in /data/qfuse/remote_ed25519 /data/qfuse/write_ed25519; do if test -f "$fixture_key"; then chmod 600 "$fixture_key"; fi; done'

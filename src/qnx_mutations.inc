@@ -322,6 +322,9 @@ static int io_devctl(resmgr_context_t *ctp, io_devctl_t *msg, iofunc_ocb_t *base
     }
     if (msg->i.dcmd != DCMD_FSYS_STATVFS)
         return iofunc_devctl_default(ctp, msg, base);
+    if (!namespace_depth &&
+        (!claim_payload() || namespace_node((struct node *)base->attr, 0, 0)))
+        return EAGAIN;
     struct qf_request r;
     struct _client_info *info = NULL;
     int e = request(ctp, base->ioflag, &r, &info);
@@ -462,6 +465,17 @@ static int hide_open(struct qf_request *r, const char *path, struct hidden_chang
         if (n < 0 || (size_t)n >= 4097 - parent) {
             free(newpath);
             return ENAMETOOLONG;
+        }
+        unsigned previous_scopes = namespace_lease.count;
+        qf_gate_unextend(&namespace_gate, &namespace_lease);
+        if (previous_scopes != namespace_lease.count)
+            namespace_changed();
+        int reservation = qf_gate_extend(&namespace_gate, &namespace_lease, newpath);
+        if (reservation == EBUSY)
+            continue;
+        if (reservation) {
+            free(newpath);
+            return reservation;
         }
         struct stat st;
         status = qf_getattr(r, newpath, &st, NULL);
@@ -911,11 +925,21 @@ static int io_close_dup(resmgr_context_t *ctp, io_close_t *msg, iofunc_ocb_t *ba
     if (S_ISREG(base->attr->mode) && server.session.ops.flush) {
         struct open_file *f = (struct open_file *)base;
         int take_gate = !namespace_depth;
-        if (!current_request) {
+        request_handle(f->handle);
+        int flush_ready = 0;
+        if (current_request && !atomic_load(&f->handle->interrupted) && claim_payload()) {
+            current_request->close_wait = pool_serial;
+            flush_ready = !take_gate || !namespace_node(f->node, 0, pool_serial);
+            current_request->close_wait = 0;
+            if (atomic_load(&f->handle->interrupted))
+                flush_ready = 0;
+        }
+        if (!current_request || !flush_ready) {
             f->handle->deferred_flush = 1;
-        } else if (!claim_payload() || (take_gate && !borrow_namespace())) {
-            f->handle->deferred_flush = 1;
-            result = -EAGAIN;
+            if (current_request)
+                result = -EAGAIN;
+            if (take_gate)
+                namespace_leave();
         } else {
             struct qf_request r = f->opener;
             struct _client_info *info = NULL;
@@ -925,11 +949,8 @@ static int io_close_dup(resmgr_context_t *ctp, io_close_t *msg, iofunc_ocb_t *ba
                 f->handle->deferred_flush = 0;
             if (info)
                 iofunc_client_info_ext_free(&info);
-            if (take_gate) {
-                namespace_depth--;
-                namespace_exclusive = 0;
-                pthread_rwlock_unlock(&namespace_gate);
-            }
+            if (take_gate)
+                namespace_leave();
         }
     }
     int e = iofunc_close_dup_default(ctp, msg, base);

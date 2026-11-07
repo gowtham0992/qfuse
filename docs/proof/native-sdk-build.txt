@@ -1,0 +1,11 @@
+Installed public QFuse SDK files: /home/qnx/qfuse-sdk-complete.BCxQdl/stage/aarch64le/usr/local
+Installed public QFuse SDK files: /home/qnx/qfuse-sdk-complete.BCxQdl/stage/x86_64/usr/local
+PASS installed package: unchanged upstream hello and passthrough link using installed fuse3 and opt-in qfuse-dirent metadata.
+PASS native recipe target tools: aarch64le
+PASS installed package: unchanged upstream hello and passthrough link using installed fuse3 and opt-in qfuse-dirent metadata.
+PASS native recipe target tools: x86_64
+Installed public QFuse SDK files: /home/qnx/qfuse-native-port.eJcSa8/stage-headers/x86_64/usr/local
+PASS native hinstall stages public headers without target binaries
+PASS native uninstall preserves modified and unrelated files
+Removed only unchanged QFuse installation files.
+PASS native uninstall removes unchanged package files only

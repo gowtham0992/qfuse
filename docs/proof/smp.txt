@@ -1,0 +1,67 @@
+Four-processor QNX 8.0 functional verification
+
+Scope: author-run QEMU, multi-threaded TCG, existing private SDK/runtime.
+Both guests report four active processors. No physical board or outside-user result.
+Existing core binaries were reused; all 14 core source hashes match the current
+tree and both existing build-source manifests. This is not a new clean rebuild
+or independent binary-to-source attestation. Core C code was not changed.
+
+ARM aarch64le: QEMU 8.2, native ARM64 host
+Commands: run-conformance.sh --full; --namespace; --saturation;
+          --readonly-sshfs (normal/high priority and wrong key); --writable-sshfs.
+CPU:AARCH64 Release:8.0.0  FreeMem:352MB/512MB BootTime:Nov 07 04:55:31 UTC 2026
+Processor1: 1092604016 Cortex-A57 0MHz FPU 
+Processor2: 1092604016 Cortex-A57 0MHz FPU 
+Processor3: 1092604016 Cortex-A57 0MHz FPU 
+Processor4: 1092604016 Cortex-A57 0MHz FPU 
+QFUSE_CASE_SUMMARY	51	0
+PASS concurrent clients: 8 processes appended 128 intact unique records through the four-worker resource manager
+PASS strict death deadline: error returned from the already-blocked read before the required deadline; partial copy rejected
+PASS passthrough: native cp copied 5000 files through the mount; native diff -r is clean
+PASS scoped namespace isolation and cleanup
+PASS ordinary single-thread close queues safely and reports successful flush
+PASS synchronous close preserves filesystem flush errors and closes the descriptor
+PASS cancelled workers leave mutex waits without entering another held callback
+Both read and open cancelled-waiter saturation modes completed.
+PASS SSHFS negative connection: authentication failure exits and detaches the staged mount
+PASS SSHFS concurrent namespace: 8 clients create/write/rename/read/unlink independent files
+PASS writable SSHFS: 200037 bytes, 64 KiB writes/reads, pwrite, truncate, chmod, timestamps, rename, symlink, statfs and persisted remount
+
+x86_64: QEMU 6.2, native ARM64 host
+Commands: run-conformance.sh --full; --namespace; --saturation;
+          --readonly-sshfs (normal/high priority and wrong key); --writable-sshfs.
+CPU:X86_64 Release:8.0.0  FreeMem:354MB/511MB BootTime:Nov 07 05:14:42 UTC 2026
+Processor1: 394802 AMD ?86 F15M107S1 1005MHz FPU 
+Processor2: 394802 AMD ?86 F15M107S1 1005MHz FPU 
+Processor3: 394802 AMD ?86 F15M107S1 1005MHz FPU 
+Processor4: 394802 AMD ?86 F15M107S1 1005MHz FPU 
+QFUSE_CASE_SUMMARY	51	0
+PASS concurrent clients: 8 processes appended 128 intact unique records through the four-worker resource manager
+PASS strict death deadline: error returned from the already-blocked read before the required deadline; partial copy rejected
+PASS passthrough: native cp copied 5000 files through the mount; native diff -r is clean
+PASS scoped namespace isolation and cleanup
+PASS ordinary single-thread close queues safely and reports successful flush
+PASS synchronous close preserves filesystem flush errors and closes the descriptor
+PASS cancelled workers leave mutex waits without entering another held callback
+Both read and open cancelled-waiter saturation modes completed.
+PASS SSHFS negative connection: authentication failure exits and detaches the staged mount
+PASS SSHFS concurrent namespace: 8 clients create/write/rename/read/unlink independent files
+PASS writable SSHFS: 200037 bytes, 64 KiB writes/reads, pwrite, truncate, chmod, timestamps, rename, symlink, statfs and persisted remount
+
+PASS native bindfs: write-through, symlink/read, persistence, permission transformation, use_ino and remount
+Bindfs runtime scope: existing x86_64 port only.
+GLib/libffi dependency probes passed on both targets.
+Existing host-shared ARM and x86 ELF executables ran through SSHFS;
+both mounts stopped and the isolated live-share container was removed.
+
+Setup qualifications:
+- Native-host QEMU 8.2 x86 SSH readiness failed; no suite pass claimed.
+- The older double-emulated x86 run hit ENOSPC while creating its native
+  fixture before mounting. Two verified inactive old fixture trees were
+  removed. The complete clean x86 rerun on native-host QEMU 6.2 exited 0.
+- Test assertions and native deadlines were not relaxed.
+
+Cleanup: old synthetic fixtures removed; no QFuse mount/server remains;
+both SFTP services stopped; temporary live-share and failed emulator
+containers removed. Licensed SDK, keys and current builds retained.
+Final data filesystem free inodes: ARM 23912; x86_64 23903 (24064 total).

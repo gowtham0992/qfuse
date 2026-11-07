@@ -5,6 +5,20 @@ profile has run on QNX 8.0 x86_64 and aarch64le under QEMU, with the owner's SDK
 and private runtime. Both Linux build userlands use the same owner's host;
 clean-clone rebuilds are not independent developer adoption.
 
+## Processor configuration
+
+Historical evidence predates the explicit SMP run and used one guest CPU;
+receiver/worker counts in those transcripts are server threads, not processors.
+The current lab defaults to four CPUs with multi-threaded TCG. Verify the actual
+processor count with `pidin info` inside each guest. These are emulated SMP
+functional checks, not physical-board or hardware-latency measurements.
+
+[smp.txt](../proof/smp.txt) records completed native, namespace, saturation,
+large-copy and SSHFS gates on both four-processor guests, plus the existing x86
+bindfs port and shared-folder executable loading. It qualifies the failed setup
+attempts and cleanup. The current source hashes and prior build manifests match;
+the SMP run reused those binaries rather than performing another rebuild.
+
 ## Functional gates
 
 - 51 named native-versus-mounted cases compare semantic returns, exact errno,

@@ -1,6 +1,7 @@
 # Native target emulation only. The owner's SDK/runtime remains in private
 # mounts at execution time and is never copied into an image layer.
-FROM ubuntu:24.04@sha256:fe81560990fae86dc4743202b2cb4d3df98d0bcf949173cecef15ce1127ef852
+ARG QFUSE_TARGET_BASE=ubuntu:24.04@sha256:fe81560990fae86dc4743202b2cb4d3df98d0bcf949173cecef15ce1127ef852
+FROM ${QFUSE_TARGET_BASE}
 RUN apt-get update && DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends \
     ca-certificates qemu-system-arm qemu-system-x86 qemu-utils netcat-openbsd \
     && rm -rf /var/lib/apt/lists/*

@@ -1,6 +1,8 @@
 #!/usr/bin/env bash
 # Shared target/build defaults. Source this; do not execute it as a command.
 export QFUSE_ARCH=${QFUSE_ARCH:-x86_64}
+export QFUSE_TARGET_CPUS=${QFUSE_TARGET_CPUS:-4}
+[[ $QFUSE_TARGET_CPUS =~ ^[1-9][0-9]?$ && $QFUSE_TARGET_CPUS -le 64 ]] || { echo 'QFUSE_TARGET_CPUS must be an integer from 1 to 64' >&2; return 2; }
 case "$QFUSE_ARCH" in
  x86_64) qfuse_bin_prefix=ntox86_64; qfuse_legacy_suffix=; qfuse_port_default=2222; qfuse_legacy_target=x86_64;;
  aarch64le) qfuse_bin_prefix=ntoaarch64; qfuse_legacy_suffix=-aarch64le; qfuse_port_default=2224; qfuse_legacy_target=aarch64;;

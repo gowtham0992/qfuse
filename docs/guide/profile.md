@@ -27,14 +27,19 @@ Callbacks on different files may run concurrently. Same-file I/O is serialized
 by a priority-inheriting operation mutex, including open and stat on the same
 file. Cancelled requests waiting for that mutex unwind and return their worker
 and admission slot; a callback already running retains its resources until it
-returns.
+returns. A long listing (`ls -l`) of a directory containing a stalled file
+can wait while it obtains that file's metadata, even though other files work.
+Operation-mutex waiters use kernel timed waits with a 10 ms cancellation check;
+the condition-variable namespace scheduler does not replace that separate retry.
 
 Namespace operations use bounded, queued path leases. Reads share a path;
 mutations reserve their affected path, and rename reserves source and destination
 atomically. Ancestor/descendant overlap counts as a conflict. Conflicting queued
 leases preserve arrival order, so new readers cannot continually bypass an
 already queued writer. Unrelated paths, including siblings in one directory,
-can proceed concurrently.
+can proceed concurrently. A queued directory rename behind a stalled read
+also queues later requests beneath that directory until it can proceed or its
+wait is cancelled; this is the tradeoff for preventing writer starvation.
 
 Namespace waiters sleep on condition variables and are woken on release or
 cancellation. A queued descriptor request revalidates its node path after a

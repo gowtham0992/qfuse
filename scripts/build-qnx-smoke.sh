@@ -20,7 +20,7 @@ if [[ ! -f "$target_root/client_ed25519" ]]; then
 fi
 cd "$target_root"
 if [[ ! -f local/options ]]; then
-    mkqnximage --type=qemu --arch="$QFUSE_ARCH" --hostname=qfuse-target --cpu=1 --ram=512M
+    mkqnximage --type=qemu --arch="$QFUSE_ARCH" --hostname=qfuse-target --cpu="$QFUSE_TARGET_CPUS" --ram=512M
 fi
 mkdir -p local/snippets
 printf '[perms=0755] /usr/bin/qfuse-test-core=%s/test-core\n' "$artifact_root" > local/snippets/ifs_files.qfuse
@@ -71,4 +71,4 @@ echo QFUSE_PASSTHROUGH_TEST_EXIT=$qfuse_result > /dev/ser1
 EOF
     fi
 fi
-mkqnximage --ssh-ident="$target_root/client_ed25519.pub" --data-size=128 --data-inodes=24000 --build
+mkqnximage --cpu="$QFUSE_TARGET_CPUS" --ssh-ident="$target_root/client_ed25519.pub" --data-size=128 --data-inodes=24000 --build

@@ -10,7 +10,8 @@ mounted folder. The background launcher checks the process identity and instance
 before sending management commands.
 
 **Experimental, source-compatible subset of FUSE API 31.** Verified on QNX 8.0
-x86_64 and aarch64le in QEMU. Mounting requires root. See the
+x86_64 and aarch64le in QEMU, including four-processor runs on both. Mounting
+requires root. See the
 [supported profile](docs/guide/profile.md) before porting another application.
 
 ## Use it on QNX

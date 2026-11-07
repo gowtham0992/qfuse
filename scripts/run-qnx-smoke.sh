@@ -9,7 +9,7 @@ network="user,id=net0,restrict=on,hostfwd=tcp:127.0.0.1:${QFUSE_TARGET_PORT}-:22
 if [[ ${QFUSE_SFTP_TEST:-0} == 1 ]]; then
     network+=',guestfwd=tcp:10.0.2.100:2223-cmd:/usr/bin/nc 127.0.0.1 2223'
 fi
-common=(-pidfile output/qfuse-smoke.pid -accel tcg -smp 1 -m 512M
+common=(-pidfile output/qfuse-smoke.pid -accel tcg,thread=multi -smp "$QFUSE_TARGET_CPUS" -m 512M
         -kernel output/ifs.bin -display none -serial stdio -monitor none)
 if [[ $QFUSE_ARCH == aarch64le ]]; then
     exec qemu-system-aarch64 "${common[@]}" -machine virt-4.2 -cpu cortex-a57 \

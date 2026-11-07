@@ -77,7 +77,7 @@ until their SDK dispatch completes; cancelled contexts cannot reply to a later
 send reusing a receive ID. Private I/O buffers remain alive while callbacks run.
 
 Threads waiting for a per-file operation mutex use QNX's
-`pthread_mutex_clocklock` with short `CLOCK_MONOTONIC` deadlines. This blocks in
+`pthread_mutex_clocklock` with 10 ms `CLOCK_MONOTONIC` deadlines. This blocks in
 the kernel with the mutex's priority-inheritance protocol, while allowing a
 cancelled waiter to unwind without acquiring the mutex. Both the OCB-dispatch
 and connect/open paths use it. A thread already inside a foreign callback keeps

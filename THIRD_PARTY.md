@@ -36,7 +36,7 @@ installation under the owner's applicable license.
 
 `sshfs-dependencies.lock.json` pins SSHFS 3.7.3 sources and its GPLv2 text,
 GLib 2.84.3, libffi 3.4.6, and the QNX port's atomic-library detection patch
-at commit `1964dba24df0b5360bf98b817717f1c5b04224e5`. The one-line SSHFS
+at commit `1964dba24df0b5360bf98b817717f1c5b04224e5`. The SSHFS transport/directory-metadata
 portability patch is GPL-2.0-only. The combined SSHFS executable must preserve
 its applicable GPL terms and corresponding source if distributed.
 

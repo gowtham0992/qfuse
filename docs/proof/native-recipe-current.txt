@@ -1,0 +1,9 @@
+Current source rebuilt using the real QNX 8 SDK recurse.mk/common.mk/qtargets.mk recipe.
+Private Linux-native snapshot on the same author-owned SDK host; not independent adoption.
+Initial harness omission of LICENSE was corrected before this successful run.
+
+PASS installed package: unchanged upstream hello and passthrough link using installed fuse3 and opt-in qfuse-dirent metadata.
+PASS native recipe target tools: aarch64le
+PASS installed package: unchanged upstream hello and passthrough link using installed fuse3 and opt-in qfuse-dirent metadata.
+PASS native recipe target tools: x86_64
+PASS current native recipe: both architectures install/verify; optional launcher also compiles for x86_64

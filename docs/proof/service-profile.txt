@@ -1,0 +1,56 @@
+QNX 8.0 aarch64le QEMU enforcing-policy lab. Same author and licensed SDK.
+The surrounding private system policy is not a production-hardening claim.
+
+Managed hello and status
+Starting background filesystem at /data/qfuse-secure...
+/data/qfuse-secure: ready (pid 770069)
+Operations: 0/32; cancelled waits: 0; deferred cleanup: 0
+Hello World!
+/data/qfuse-secure: ready (pid 770069)
+Operations: 0/32; cancelled waits: 0; deferred cleanup: 0
+
+Unauthorized mount and non-root management
+PASS restricted service: dedicated UID, root transition, private file, physical-memory/IO ability escalation and unauthorized path link denied
+QFuse mount: Permission denied
+PASS_OTHER_MOUNT_PATH_DENIED
+qfuse-mount: root is required: Operation not permitted
+PASS_NONROOT_MANAGEMENT_DENIED
+Stopped /data/qfuse-secure
+PASS_ROOT_MANAGED_STOP
+
+Restricted SSHFS complete comparison
+uid=65534(qfuse) gid=65534(qfuse) groups=65534(qfuse)
+Starting background filesystem at /data/qfuse-secure...
+/data/qfuse-secure: ready (pid 974869)
+Operations: 0/32; cancelled waits: 0; deferred cleanup: 0
+PASS_RESTRICTED_SSHFS_200037_BYTES
+/data/qfuse-secure: ready (pid 974869)
+Operations: 0/32; cancelled waits: 0; deferred cleanup: 0
+
+Remount before an error-reporting-only helper correction
+     pid name                                                                             type             
+     pid name                                                                             type             
+PASS restricted service: dedicated UID, root transition, private file, physical-memory/IO ability escalation and unauthorized path link denied
+QFuse mount: Permission denied
+PASS_OTHER_PATH_DENIED
+Stopped /data/qfuse-secure
+Starting background filesystem at /data/qfuse-secure...
+/data/qfuse-secure: ready (pid 1101845)
+Operations: 0/32; cancelled waits: 0; deferred cleanup: 0
+Stopped /data/qfuse-secure
+PASS_RESTRICTED_SSHFS_REMOUNT_AND_STOP
+
+Final launcher: actual types, data, denials and stop
+Starting background filesystem at /data/qfuse-secure...
+/data/qfuse-secure: ready (pid 1224725)
+Operations: 0/32; cancelled waits: 0; deferred cleanup: 0
+PASS_CHECKED_LAUNCHER_SSHFS
+     pid name                                                                             type             
+ 1224725 data/qfuse-service/bin/qfuse-sshfs                                               qfuse_t          
+ 1232919 system/bin/ssh                                                                   qfuse_ssh_t      
+ 1253396 proc/boot/pidin                                                                  qfuse_t          
+PASS restricted service: dedicated UID, root transition, private file, physical-memory/IO ability escalation and unauthorized path link denied
+QFuse mount: Operation not permitted
+PASS_SSH_CHILD_TYPE_MOUNT_DENIED
+Stopped /data/qfuse-secure
+

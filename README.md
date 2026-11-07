@@ -9,10 +9,13 @@ that callback to cooperate. A separate authenticated channel provides status and
 stop operations without traversing the mounted folder. The callback may continue
 running until it returns or its filesystem process is terminated.
 
-**Experimental, source-compatible subset of FUSE API 31. Root mounts; a Linux
+**Experimental, source-compatible subset of FUSE API 31. Root management; a Linux
 x86_64 SDK build host is required.** Verified on QNX 8.0 x86_64 and aarch64le in
 QEMU, including four-processor runs on both. Read the
-[supported profile](docs/guide/profile.md) before porting an application.
+[supported profile](docs/guide/profile.md) before porting an application. An optional
+[enforcing service profile](docs/guide/security.md) runs SSHFS/SSH under a
+dedicated non-root UID; it is verified on ARM QEMU and requires target-specific
+security-policy integration.
 
 ## Where it fits
 
@@ -160,7 +163,9 @@ locking, ownership, limits and failure behavior.
 
 Upstream hello and passthrough sources build unchanged. Passthrough selects the
 explicit optional `qfuse-dirent` adapter for QNX directory-entry conversion.
-SSHFS 3.7.3 has one preprocessor-guard change for the absent Linux transport FD.
+SSHFS 3.7.3 has a transport-FD guard and a QNX-specific directory attribute flag
+for complete SFTP metadata. The latter lets native directory reads batch stats
+without enabling a positive-TTL permission cache.
 The optional bindfs 1.18.4 port mounts a permission-transformed view with the
 directory adapter and one QNX directory-open flag patch.
 These are tested compatibility baselines, not a claim that every FUSE program

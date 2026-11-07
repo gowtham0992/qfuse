@@ -11,6 +11,7 @@
 #include <unistd.h>
 #include <errno.h>
 #include <stdatomic.h>
+#include <stdio.h>
 #include "inflight_protocol.h"
 
 extern int qf_upstream_passthrough_main(int, char **);
@@ -102,6 +103,37 @@ static int held_read(const char *path, char *out, size_t size, off_t offset,
     return upstream_read(path, out, size, offset, fi);
 }
 
+struct stat_filler {
+    void *buffer;
+    fuse_fill_dir_t filler;
+    const char *path;
+    int error;
+};
+static int (*upstream_readdir)(const char *, void *, fuse_fill_dir_t, off_t,
+                              struct fuse_file_info *, enum fuse_readdir_flags);
+static int stat_fill(void *data, const char *name, const struct stat *hint, off_t offset,
+                     enum fuse_fill_dir_flags flags)
+{
+    (void)hint; (void)flags;
+    struct stat_filler *f = data;
+    char path[4097];
+    int n = snprintf(path, sizeof(path), "%s%s%s", f->path, !strcmp(f->path,"/") ? "" : "/", name);
+    if (n < 0 || (size_t)n >= sizeof(path)) { f->error = -ENAMETOOLONG; return 1; }
+    struct stat st;
+    if (lstat(path, &st)) { f->error = -errno; return 1; }
+    return f->filler(f->buffer, name, &st, offset, FUSE_FILL_DIR_PLUS);
+}
+static int stat_readdir(const char *path, void *buffer, fuse_fill_dir_t filler, off_t offset,
+                        struct fuse_file_info *fi, enum fuse_readdir_flags flags)
+{
+    if (getenv("QFUSE_DIR_STAT_NULL")) {
+        (void)filler(buffer,"invalid",NULL,0,FUSE_FILL_DIR_PLUS);
+        return 0;
+    }
+    struct stat_filler f = {buffer, filler, path, 0};
+    int e = upstream_readdir(path, &f, stat_fill, offset, fi, flags);
+    return e ? e : f.error;
+}
 int qf_inflight_main(int argc, char **argv, const struct fuse_operations *ops, size_t size,
                      void *data)
 {
@@ -115,6 +147,10 @@ int qf_inflight_main(int argc, char **argv, const struct fuse_operations *ops, s
     held_path = getenv("QFUSE_INFLIGHT_PATH");
     force_eof = getenv("QFUSE_TEST_FORCE_EOF") != NULL;
     upstream_read = wrapped.read;
+    if (getenv("QFUSE_DIR_STAT_FULL") || getenv("QFUSE_DIR_STAT_NULL")) {
+        upstream_readdir = wrapped.readdir;
+        wrapped.readdir = stat_readdir;
+    }
     if (notify && release && held_path) {
         notify_fd = atoi(notify);
         release_fd = atoi(release);

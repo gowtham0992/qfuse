@@ -99,6 +99,8 @@ static int pool_handler(dispatch_context_t *ctp)
     if (*link)
         *link = r.next;
     payload_requests -= r.payload;
+    if (r.payload)
+        pthread_cond_broadcast(&payload_ready);
     pthread_mutex_unlock(&pending_mutex);
     current_request = NULL;
     drain_closed_ocbs();

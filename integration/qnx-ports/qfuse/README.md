@@ -74,9 +74,11 @@ management and lifecycle. ARM also passed native cp/diff over 5,000 files.
 The project tests SSHFS reads/writes, concurrent namespace operations and
 persisted remount separately. See its verification guide for qualified evidence.
 
-This is experimental source compatibility, with root mounts and a tested
-high-level API subset. Low-level FUSE, non-root mounting, xattrs and locking are
-outside the supported profile. Conflicting paths and shared backend dependencies
+This is experimental source compatibility with root management and a tested
+high-level API subset. An optional target-specific enforcing policy can run
+SSHFS as a dedicated non-root service UID; see the project security guide.
+Low-level FUSE, ordinary unprivileged mounting, xattrs and locking are outside
+the supported profile. Conflicting paths and shared backend dependencies
 can still block callbacks; client cancellation does not roll back writes or
 forcibly cancel foreign code. QEMU functional tests establish no hardware,
 hard-real-time or safety guarantee.

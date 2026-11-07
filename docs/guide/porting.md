@@ -20,11 +20,15 @@ using its documented direct-call interface.
 The adapter supports opendir/readdir/closedir, dirfd, rewinddir, telldir and
 seekdir. Function-pointer use, native QNX directory extras/control interfaces,
 fdopendir, scandir, readdir_r and explicit 64-bit variants are outside that
-adapter. Unsupported complete-directory metadata fills return ENOTSUP.
+adapter. Complete, flagged directory attributes map to native QNX stat extras when
+requested and authorized. Partial hints fall back to ordinary entries; a flagged
+null stat pointer returns EIO and unknown fill flags return ENOTSUP.
 
 Preserve third-party licenses and keep source differences explicit. SSHFS 3.7.3
-changes one guard to skip Linux transport-FD handling. Dependency/build work and
-compatibility-layer code are separate from that small application source delta.
+guards Linux transport-FD handling and flags complete SFTP directory attributes
+for QNX stat extras. Dependency/build work and compatibility-layer code are
+separate from those application source changes. Inspect
+`patches/sshfs-qnx.patch` for the complete upstream delta.
 
 Use the native probes for actual mounts and permissions. `make check` verifies
 portable callback behavior only. Check error/cancellation behavior while a real

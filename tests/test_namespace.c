@@ -179,10 +179,13 @@ int main(int argc, char **argv)
     const char *operation = argc == 2 ? argv[1] : "read";
     int grace_mode = !strcmp(operation, "grace");
     int serial_close = !strcmp(operation, "serial-close");
+    int parallel_close = !strcmp(operation, "parallel-close");
+    int io_close = !strcmp(operation, "io-close");
+    int synchronous_close = serial_close || parallel_close || io_close;
     int flush_error = !strcmp(operation, "flush-error");
-    if (grace_mode || serial_close)
+    if (grace_mode || serial_close || parallel_close)
         operation = "rename";
-    if (flush_error)
+    if (flush_error || io_close)
         operation = "read";
     int rename_mode = !strcmp(operation, "rename"), mkdir_mode = !strcmp(operation, "mkdir");
     int fair_mode = !strcmp(operation, "fair");
@@ -227,7 +230,7 @@ int main(int argc, char **argv)
         setenv("QFUSE_INFLIGHT_OPERATION", operation, 1);
         if (flush_error)
             setenv("QFUSE_FLUSH_ERROR", "1", 1);
-        if (serial_close)
+        if (synchronous_close)
             setenv("QFUSE_ENABLE_FLUSH", "1", 1);
         char release_path[768];
         snprintf(release_path, sizeof(release_path), "%s/release-check", root);
@@ -271,12 +274,12 @@ int main(int argc, char **argv)
         stable_fd = open(p, O_RDONLY);
         CHECK(stable_fd >= 0);
     }
-    if (rename_mode) {
+    if (rename_mode || io_close) {
         closer = fork();
         CHECK(closer >= 0);
         if (!closer) {
             char p[1024];
-            snprintf(p, sizeof(p), "%s/payload", held_view);
+            snprintf(p, sizeof(p), "%s%s", held_view, rename_mode ? "/payload" : "");
             int f = open(p, O_RDONLY);
             if (f < 0)
                 _exit(5);
@@ -284,7 +287,7 @@ int main(int argc, char **argv)
             while (!atomic_load(&shared->close_go))
                 pause_short();
             int result = close(f), saved = errno;
-            int accepted = result == 0 || (!serial_close && result == -1 && saved == EAGAIN);
+            int accepted = result == 0 || (!synchronous_close && result == -1 && saved == EAGAIN);
             errno = saved;
             publish(&shared->closer, accepted ? 0 : -1);
             _exit(accepted ? 0 : 1);
@@ -329,11 +332,12 @@ int main(int argc, char **argv)
     }
     CHECK(seen && event.caller == holder);
     printf("PASS namespace precondition: %s callback is held\n", operation);
-    if (serial_close) {
-        unsigned before = thread_state_count(server, "CONDVAR");
+    if (synchronous_close) {
+        const char *wait_state = io_close ? "MUTEX" : "CONDVAR";
+        unsigned before = thread_state_count(server, wait_state);
         atomic_store(&shared->close_go, 1);
         uint64_t end = now() + 5000000000ULL;
-        while (thread_state_count(server, "CONDVAR") <= before) {
+        while (thread_state_count(server, wait_state) <= before) {
             CHECK(!atomic_load(&shared->closer.done) && now() < end);
             pause_short();
         }
@@ -350,7 +354,8 @@ int main(int argc, char **argv)
         cleanup();
         root[0] = 0;
         alarm(0);
-        puts("PASS ordinary single-thread close queues safely and reports successful flush");
+        printf("PASS ordinary %s close queues safely and reports successful flush\n",
+               serial_close ? "single-thread" : io_close ? "same-file I/O" : "multithreaded");
         return 0;
     }
     if (rename_mode) {

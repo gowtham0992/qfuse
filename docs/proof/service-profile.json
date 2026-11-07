@@ -1,0 +1,9 @@
+{
+  "target": "QNX 8.0.0 aarch64le, QEMU, enforcing policy",
+  "scope": "Optional deployment profile only. Final launcher run is the last section of service-profile.txt; earlier remount predates an error-reporting-only launcher correction. Full ordinary-profile suites are separate. Final rule source differs from the exercised rule file only in a clarified comment.",
+  "source_sha256": {
+    "integration/security/qfuse.rules": "2754804a01da4c9efde3c2bce047975fa053c5f8d14b309076172cd74912552c",
+    "integration/security/service-exec.c": "d5de2931ff761faa860439b570e7e7f50a37f18873a80705c90ff5028396a73f",
+    "tests/test_service_permissions.c": "7682309bb08b570cadfe69a9854d2f3df0d470c6a5c3f77e71557e2970ca3289"
+  }
+}

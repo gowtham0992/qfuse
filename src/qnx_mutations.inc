@@ -926,13 +926,22 @@ static int io_close_dup(resmgr_context_t *ctp, io_close_t *msg, iofunc_ocb_t *ba
         struct open_file *f = (struct open_file *)base;
         int take_gate = !namespace_depth;
         request_handle(f->handle);
-        int flush_ready = 0;
-        if (current_request && !atomic_load(&f->handle->interrupted) && claim_payload()) {
-            current_request->close_wait = pool_serial;
-            flush_ready = !take_gate || !namespace_node(f->node, 0, pool_serial);
+        int flush_ready = 0, locked_operation = 0;
+        if (current_request) {
+            current_request->close_wait = 1;
+            if (!atomic_load(&f->handle->interrupted) && claim_payload_wait()) {
+                flush_ready = !take_gate || !namespace_node(f->node, 0, 1);
+                if (flush_ready) {
+                    unsigned depth = state_drop();
+                    waiting_begin();
+                    int e = operation_lock(&f->node->operation_mutex);
+                    state_restore(depth);
+                    waiting_end();
+                    locked_operation = !e;
+                    flush_ready = !e && !operation_abandoned();
+                }
+            }
             current_request->close_wait = 0;
-            if (atomic_load(&f->handle->interrupted))
-                flush_ready = 0;
         }
         if (!current_request || !flush_ready) {
             f->handle->deferred_flush = 1;
@@ -952,6 +961,8 @@ static int io_close_dup(resmgr_context_t *ctp, io_close_t *msg, iofunc_ocb_t *ba
             if (take_gate)
                 namespace_leave();
         }
+        if (locked_operation)
+            pthread_mutex_unlock(&f->node->operation_mutex);
     }
     int e = iofunc_close_dup_default(ctp, msg, base);
     return e ? e : result < 0 ? -result : 0;

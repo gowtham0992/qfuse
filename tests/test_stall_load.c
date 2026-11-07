@@ -6,6 +6,9 @@
 #include <sys/mman.h>
 #include <sys/wait.h>
 #include <sys/neutrino.h>
+#include <sys/procfs.h>
+#include <sys/states.h>
+#include <devctl.h>
 #include <pthread.h>
 #include <sched.h>
 #include <stdatomic.h>
@@ -29,11 +32,12 @@ static struct shared {
     _Atomic int ready, go, held, interrupt;
     _Atomic uint64_t signalled;
     struct result result[CLIENTS];
+    struct result closing;
 } * shared;
 static int file, notices[2], releases[2];
-static pid_t server, client;
+static pid_t server, client, closing_client;
 static char root[256], source[512], other_source[512], view[768], other_view[768];
-static int open_waiters;
+static int open_waiters, close_pressure, healthy_file = -1;
 #define CHECK(x)                                                                                   \
     do {                                                                                           \
         if (!(x)) {                                                                                \
@@ -64,6 +68,11 @@ static void cleanup(void)
         waitpid(client, NULL, 0);
         client = 0;
     }
+    if (closing_client > 0) {
+        kill(closing_client, SIGKILL);
+        waitpid(closing_client, NULL, 0);
+        closing_client = 0;
+    }
     if (source[0])
         unlink(source);
     if (other_source[0])
@@ -78,6 +87,8 @@ static void timeout_test(int n)
         kill(server, SIGKILL);
     if (client > 0)
         kill(client, SIGKILL);
+    if (closing_client > 0)
+        kill(closing_client, SIGKILL);
     _exit(124);
 }
 static void signal_client(int n)
@@ -110,32 +121,28 @@ static void *read_client(void *p)
     atomic_store(&r->done, 1);
     return NULL;
 }
+/* Query procfs directly: diagnostic children must not duplicate descriptors
+ * belonging to the very filesystem whose callback admission is saturated. */
 static unsigned blocked_count(pid_t pid, const char *state)
 {
-    int p[2];
-    CHECK(!pipe(p));
-    pid_t probe = fork();
-    CHECK(probe >= 0);
-    if (!probe) {
-        close(p[0]);
-        dup2(p[1], STDOUT_FILENO);
-        close(p[1]);
-        char number[32];
-        snprintf(number, sizeof(number), "%d", pid);
-        execlp("pidin", "pidin", "-p", number, NULL);
-        _exit(127);
-    }
-    close(p[1]);
-    FILE *stream = fdopen(p[0], "r");
-    CHECK(stream);
-    char line[512];
+    int wanted = !strcmp(state, "REPLY") ? STATE_REPLY : STATE_MUTEX;
+    CHECK(!strcmp(state, "REPLY") || !strcmp(state, "MUTEX"));
+    char name[64];
+    snprintf(name, sizeof(name), "/proc/%d/as", pid);
+    int fd = open(name, O_RDONLY | O_CLOEXEC);
+    CHECK(fd >= 0);
     unsigned count = 0;
-    while (fgets(line, sizeof(line), stream))
-        if (strstr(line, state))
-            count++;
-    fclose(stream);
-    int status;
-    CHECK(waitpid(probe, &status, 0) == probe && WIFEXITED(status) && !WEXITSTATUS(status));
+    procfs_status status = {0};
+    status.tid = 1;
+    for (;;) {
+        int e = devctl(fd, DCMD_PROC_TIDSTATUS, &status, sizeof(status), NULL);
+        if (e == ESRCH)
+            break;
+        CHECK(!e);
+        count += status.state == wanted;
+        status.tid++;
+    }
+    CHECK(!close(fd));
     return count;
 }
 static void check_unrelated(int priority)
@@ -168,7 +175,8 @@ static void check_unrelated(int priority)
 }
 int main(int argc, char **argv)
 {
-    open_waiters = argc == 2 && !strcmp(argv[1], "--open");
+    close_pressure = argc == 2 && !strcmp(argv[1], "--close-pressure");
+    open_waiters = close_pressure || (argc == 2 && !strcmp(argv[1], "--open"));
     CHECK(argc == 1 || open_waiters);
     setvbuf(stdout, NULL, _IOLBF, 0);
     atexit(cleanup);
@@ -200,6 +208,8 @@ int main(int argc, char **argv)
         setenv("QFUSE_INFLIGHT_NOTIFY_FD", a, 1);
         setenv("QFUSE_INFLIGHT_RELEASE_FD", b, 1);
         setenv("QFUSE_INFLIGHT_PATH", source, 1);
+        if (close_pressure)
+            setenv("QFUSE_ENABLE_FLUSH", "1", 1);
         const char *binary = getenv("QFUSE_INFLIGHT_BINARY");
         execl(binary ? binary : "/data/qfuse/qfuse-inflight", "inflight", "-f", "-o", "ro",
               "/qfuse-load", NULL);
@@ -217,6 +227,10 @@ int main(int argc, char **argv)
     }
     file = open(view, O_RDONLY);
     CHECK(file >= 0);
+    if (close_pressure) {
+        healthy_file = open(other_view, O_RDONLY);
+        CHECK(healthy_file >= 0);
+    }
     client = fork();
     CHECK(client >= 0);
     if (!client) {
@@ -270,6 +284,24 @@ int main(int argc, char **argv)
     CHECK(blocked == CLIENTS);
     puts("PASS saturation precondition: all 32 admitted read clients are kernel REPLY-blocked "
          "while one callback is held");
+    if (close_pressure) {
+        closing_client = fork();
+        CHECK(closing_client >= 0);
+        if (!closing_client) {
+            errno = 0;
+            shared->closing.returned = close(healthy_file);
+            shared->closing.error = errno;
+            atomic_store(&shared->closing.done, 1);
+            _exit(shared->closing.returned ? 1 : 0);
+        }
+        end = now() + 5000000000ULL;
+        while (!blocked_count(closing_client, "REPLY")) {
+            CHECK(!atomic_load(&shared->closing.done) && now() < end);
+            pause_short();
+        }
+        CHECK(!atomic_load(&shared->closing.done));
+        puts("PASS close-pressure precondition: healthy close waits while all admission slots are occupied");
+    }
     if (open_waiters)
         atomic_store(&shared->interrupt, 1);
     int completed = 0;
@@ -302,6 +334,20 @@ int main(int argc, char **argv)
         }
     }
     CHECK(valid);
+    if (close_pressure) {
+        end = now() + 3000000000ULL;
+        while (!atomic_load(&shared->closing.done)) {
+            CHECK(now() < end);
+            pause_short();
+        }
+        CHECK(shared->closing.returned == 0);
+        int status;
+        CHECK(waitpid(closing_client, &status, 0) == closing_client && WIFEXITED(status) && !WEXITSTATUS(status));
+        closing_client = 0;
+        CHECK(!close(healthy_file));
+        healthy_file = -1;
+        puts("PASS close pressure: flush-capable healthy close succeeds after admission becomes available");
+    }
     /* The hold is deliberately still active. Reply delivery alone did not
      * reclaim the old implementation's mutex waiters or admission slots. */
     check_unrelated(0);

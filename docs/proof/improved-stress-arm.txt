@@ -1,0 +1,57 @@
+QFuse: mounted /qfuse-stall (read-only, dispatch pending)
+QFuse: serving with 4 minimum receiver(s); concurrent callbacks, per-file operation locking
+PASS stall precondition: read entered held upstream callback
+PASS unrelated path completes while read remains held
+PASS priority-50 directory listing completes while read remains held
+PASS held client returns EINTR before callback release
+PASS late callback completion cannot reply to the client's next held request
+PASS held-callback isolation and client interruption
+QFuse: mounted /qfuse-stall (read-only, dispatch pending)
+QFuse: serving with 4 minimum receiver(s); concurrent callbacks, per-file operation locking
+PASS stall precondition: read entered held upstream callback
+PASS unrelated path completes while read remains held
+PASS priority-50 directory listing completes while read remains held
+PASS held client returns ETIMEDOUT before callback release
+PASS late callback completion cannot reply to the client's next held request
+PASS held-callback isolation and client interruption
+QFuse: mounted /qfuse-stall (read-only, dispatch pending)
+QFuse: serving with 4 minimum receiver(s); concurrent callbacks, per-file operation locking
+PASS stall precondition: read entered held upstream callback
+PASS unrelated path completes while read remains held
+PASS priority-50 directory listing completes while read remains held
+PASS held client returns EINTR before callback release
+PASS cancelled client closes and exits before callback release
+PASS held-callback isolation and client interruption
+QFuse: mounted /qfuse-stall (read-only, dispatch pending)
+QFuse: serving with 4 minimum receiver(s); concurrent callbacks, per-file operation locking
+PASS stall precondition: read entered held upstream callback
+PASS unrelated path completes while read remains held
+PASS priority-50 directory listing completes while read remains held
+PASS held client returns EINTR before callback release
+PASS cancelled client closes and exits before callback release
+PASS interrupted close returns EAGAIN with fd closed before starting another flush
+PASS deferred flush executes and completes after the original callback unwinds
+PASS held-callback isolation and client interruption
+QFuse: mounted /qfuse-load (read-only, dispatch pending)
+QFuse: serving with 4 minimum receiver(s); concurrent callbacks, per-file operation locking
+PASS saturation precondition: all 32 admitted read clients are kernel REPLY-blocked while one callback is held
+PASS all 32 read waits return ETIMEDOUT before callback release, within the functional deadline
+PASS cancelled-waiter regression: unrelated file works at priority 10 before callback release
+PASS cancelled-waiter regression: unrelated file works at priority 50 before callback release
+PASS cancelled workers leave mutex waits without entering another held callback
+QFuse: mounted /qfuse-load (read-only, dispatch pending)
+QFuse: serving with 4 minimum receiver(s); concurrent callbacks, per-file operation locking
+PASS saturation precondition: all 32 admitted read clients are kernel REPLY-blocked while one callback is held
+PASS all 32 read/open waits return EINTR before callback release, within the functional deadline
+PASS cancelled-waiter regression: unrelated file works at priority 10 before callback release
+PASS cancelled-waiter regression: unrelated file works at priority 50 before callback release
+PASS cancelled workers leave mutex waits without entering another held callback
+QFuse: mounted /qfuse-load (read-only, dispatch pending)
+QFuse: serving with 4 minimum receiver(s); concurrent callbacks, per-file operation locking
+PASS saturation precondition: all 32 admitted read clients are kernel REPLY-blocked while one callback is held
+PASS close-pressure precondition: healthy close waits while all admission slots are occupied
+PASS all 32 read/open waits return EINTR before callback release, within the functional deadline
+PASS close pressure: flush-capable healthy close succeeds after admission becomes available
+PASS cancelled-waiter regression: unrelated file works at priority 10 before callback release
+PASS cancelled-waiter regression: unrelated file works at priority 50 before callback release
+PASS cancelled workers leave mutex waits without entering another held callback

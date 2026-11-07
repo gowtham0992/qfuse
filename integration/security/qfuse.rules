@@ -1,0 +1,49 @@
+# QNX 8.0 service-policy fragment. Merge with your reviewed system policy.
+# This lab maps storage, entropy, pipes and networking to the types below;
+# replace those peer types with your target's types. No wildcard attach rule.
+type qfuse_t;
+type qfuse_ssh_t;
+allow_attach qfuse_t /data/qfuse-secure;
+allow qfuse_t self:ability {
+    nonroot
+    public_channel
+    rsrcdbmgr
+    pathspace
+    connection
+    network/jailroot
+    prot_exec
+    map_fixed
+    spawn
+    fork
+    pgrp
+    settypeid:qfuse_t,qfuse_ssh_t
+    channel_connect:qfuse_t,devb_t,random_t,pipe_t,io_sock_t
+};
+allow qfuse_ssh_t self:ability {
+    nonroot
+    network/jailroot
+    prot_exec
+    map_fixed
+    channel_connect:qfuse_t,devb_t,random_t,pipe_t,io_sock_t
+};
+# Default exec children drop the mount service's attachment authority.
+default_spawn_type qfuse_t qfuse_ssh_t;
+allow { user_root_t default } qfuse_t:channel connect;
+# Trusted management launches a dedicated service UID and either service type.
+allow user_root_t self:ability {
+    spawn_setuid:65534
+    spawn_setgid:65534
+    settypeid:qfuse_t,qfuse_ssh_t
+};
+# Explicitly authorize privilege transitions in this disposable SSH-admin lab.
+# Production launchers should grant these transitions only to their own type.
+allow user_root_t self:ability {
+    gain_priv:pathspace,rsrcdbmgr,spawn,prot_exec,connection,pgrp,map_fixed,public_channel,channel_connect,settypeid
+};
+allow sshd_t self:ability { gain_priv:channel_connect };
+
+# In-place launcher: root-only identities permit dropping to this UID, never back.
+allow qfuse_t self:ability { setuid:65534 setgid:65534 };
+derive_type user_root_t qfuse_service qfuse_t;
+allow user_root_t self:ability { signal:9,15 };
+derive_type qfuse_t qfuse_exec qfuse_t;

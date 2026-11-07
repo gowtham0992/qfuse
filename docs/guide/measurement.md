@@ -1,12 +1,19 @@
-# One SSHFS small-file measurement
+# SSHFS small-file measurements
 
-One author-run sample measured a 5,000-file synthetic tree (10 directories,
+Author-run before/after samples measured a 5,000-file synthetic tree (10 directories,
 500 files each, 97 deterministic bytes per file; 485,000 bytes total).
 
-| Operation | Native QNX tree | SSHFS tree |
-| --- | ---: | ---: |
-| `ls -lR`, output discarded | 0.507 s | 91.834 s |
-| Sequential verified read loop | 2.632 s | 95.400 s |
+| Operation | Baseline native | Baseline SSHFS | Batched native | Batched SSHFS |
+| --- | ---: | ---: | ---: | ---: |
+| `ls -lR`, output discarded | 0.507 s | 91.834 s | 0.525 s | 22.982 s |
+| Sequential verified read loop | 2.632 s | 95.400 s | 2.635 s | 92.180 s |
+
+The directory-stat batching change made this listing about **4.0× faster**.
+The read-loop difference is small and does not establish a read-speed gain.
+Each column is one run, not an average. The initial 10× listing goal was not met.
+The normal before/after runs used the same unchanged timing helper and two-guest
+configuration, with the other guest idle. A separate preliminary run during
+third-guest startup is excluded from this comparison.
 
 The read loop opens every named file, checks all 97 bytes, checks EOF and closes
 the descriptor. The native and remote data must match the published generator.
@@ -33,19 +40,41 @@ within each phase.
 The [timing helper](../../examples/measure_share.c) uses QNX
 `CLOCK_MONOTONIC` around the native command or read loop. SSH connection setup,
 fixture creation, mounting and cleanup are outside the timings. `ls` process
-startup is inside the listing timing. No tuning or optimization was applied.
+startup is inside the listing timing. The baseline predates directory-stat batching; the optimized run enables it
+without positive cache TTLs or changed helper code.
 The [machine-readable record](../proof/share-measurement.json) includes the source
-hash, dataset and nanosecond results. The QFuse core was reused unchanged from
-public revision `9c4e672`; this was not a fresh core rebuild.
+hash, dataset and nanosecond results. The baseline core was reused from public revision `9c4e672`. The
+[optimized record](../proof/share-measurement-optimized.json) identifies the
+rebuilt batching implementation; its later optional service-UID authorization
+change does not participate in this measurement.
 
 ## Interpretation
 
-Metadata-heavy walks and many small-file opens have substantial overhead in this
-setup. This result does not support a fast build-tree traversal claim. Focused
+Metadata-heavy walks and many small-file opens still have substantial overhead
+in this setup. This result does not support a fast build-tree traversal claim. Focused
 file access and source portability remain the demonstrated use; real workload
 suitability needs its own measurement. This single sample provides no average,
 p95, hardware latency, real-network estimate, comparison with NFS, or evidence
 about another server implementation.
+
+## Why the listing improves
+
+SSHFS already receives child attributes in SFTP READDIR replies. Its QNX patch
+flags them as complete only when size, UID/GID, permissions and timestamps are
+present and symlinks are not being followed. QFuse can then return native QNX
+stat extras alongside directory names. It checks the current caller's directory
+search permission before every response. Explicit stat/open still revalidate;
+this is directory snapshot metadata, not a positive-TTL authorization cache.
+Partial upstream passthrough hints remain ordinary names/type hints.
+
+A separate listing-only diagnostic counted 442 SFTP messages (324 LSTAT,
+23 OPENDIR, 72 READDIR, 23 CLOSE). Instrumentation was a private SSHFS copy,
+not the binary timed above. The old full-workload debug trace recorded 95,432
+messages over both listing and reading; these counts have different scopes and
+must not be presented as a like-for-like reduction. A private backend diagnostic
+measured about 45 ms of directory-entry metadata conversion for 5,000 entries,
+so further optimizing that conversion is not supported by the profile. The
+remaining listing overhead has not been fully attributed.
 
 ## Reproduce the workload
 

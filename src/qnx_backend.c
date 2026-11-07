@@ -551,7 +551,8 @@ struct directory_builder {
     struct open_file *file;
     const char *path;
     size_t count;
-    int error;
+    int error, give_stat;
+    resmgr_context_t *context;
 };
 static int collect_body(void *data, const char *name, const struct stat *st, off_t cookie,
                         enum fuse_fill_dir_flags flags)
@@ -560,9 +561,14 @@ static int collect_body(void *data, const char *name, const struct stat *st, off
     struct directory_builder *b = data;
     if (b->error)
         return 1;
-    /* We request ordinary readdir and do not negotiate PLUS metadata. */
-    if (flags & FUSE_FILL_DIR_PLUS) {
+    /* FUSE permits complete metadata even without a READDIR_PLUS request.
+     * Unflagged st pointers contain only partial hints and must stay hints. */
+    if ((unsigned)flags & ~(unsigned)FUSE_FILL_DIR_PLUS) {
         b->error = ENOTSUP;
+        return 1;
+    }
+    if ((flags & FUSE_FILL_DIR_PLUS) && !st) {
+        b->error = EIO;
         return 1;
     }
     size_t length = strnlen(name, NAME_MAX + 1);
@@ -591,18 +597,22 @@ static int collect_body(void *data, const char *name, const struct stat *st, off
     }
     if (owned_hidden(path))
         return 0;
+    int complete = (flags & FUSE_FILL_DIR_PLUS) && st && st->st_nlink > 0 &&
+                   (S_ISREG(st->st_mode) || S_ISDIR(st->st_mode) || S_ISLNK(st->st_mode));
     ino_t inode;
     if (server.session.config.use_ino && st && st->st_ino)
         inode = st->st_ino;
     else {
-        struct node *node = node_for(path, (flags & FUSE_FILL_DIR_PLUS) ? st : NULL);
+        struct node *node = node_for(path, complete ? st : NULL);
         if (!node) {
             b->error = errno;
             return 1;
         }
         inode = node->attr.inode;
     }
-    size_t size = dirent_calc_reclen(length + 1);
+    size_t plain_size = (dirent_calc_reclen(length + 1) + 7u) & ~(size_t)7;
+    int extra = b->give_stat && complete;
+    size_t size = plain_size + (extra ? sizeof(struct dirent_extra_stat) : 0);
     if (size > DIRECTORY_LIMIT - b->file->entries_size) {
         b->error = EOVERFLOW;
         return 1;
@@ -620,6 +630,21 @@ static int collect_body(void *data, const char *name, const struct stat *st, off
     entry->d_reclen = size;
     entry->d_namelen = length;
     memcpy(entry->d_name, name, length + 1);
+    if (extra) {
+        struct dirent_extra_stat *meta = (void *)((char *)entry + plain_size);
+        meta->d_datalen = sizeof(meta->d_stat);
+        meta->d_type = _DTYPE_LSTAT;
+        iofunc_attr_t attr;
+        iofunc_attr_init(&attr, st->st_mode, NULL, NULL);
+        attr.mount = &server.mount;
+        attr.inode = inode;
+        update_attr(&attr, st);
+        int e = iofunc_stat(b->context, &attr, &meta->d_stat);
+        if (e) {
+            b->error = e;
+            return 1;
+        }
+    }
     b->file->entries_size += size;
     return 0;
 }
@@ -685,8 +710,20 @@ static int io_read(resmgr_context_t *ctp, io_read_t *msg, iofunc_ocb_t *base)
     char *buffer = NULL;
     size_t length = 0;
     if (S_ISDIR(base->attr->mode)) {
+        int give_stat = 0;
+        unsigned form = msg->i.xtype & _IO_XFLAG_DIR_STAT_FORM_MASK;
+        if ((msg->i.xtype & _IO_XFLAG_DIR_EXTRA_HINT) &&
+            (!form || form == _IO_XFLAG_DIR_STAT_FORM_T64_2008)) {
+            struct stat current;
+            int result = qf_getattr(&r, n->path, &current, NULL);
+            if (result < 0) { error = -result; goto done; }
+            iofunc_attr_t attr;
+            iofunc_attr_init(&attr, current.st_mode, NULL, NULL);
+            update_attr(&attr, &current);
+            give_stat = iofunc_check_access(ctp, &attr, S_IEXEC, info) == EOK;
+        }
         if (!f->listed) {
-            struct directory_builder b = {f, n->path, 0, 0};
+            struct directory_builder b = {f, n->path, 0, 0, give_stat, ctp};
             int result = qf_readdir(&r, n->path, &b, collect, 0, &f->handle->fi);
             if (result < 0 || b.error || request_cancelled()) {
                 error = request_cancelled() ? _RESMGR_NOREPLY : result < 0 ? -result : b.error;
@@ -707,11 +744,19 @@ static int io_read(resmgr_context_t *ctp, io_read_t *msg, iofunc_ocb_t *base)
             error = EINVAL;
             goto done;
         }
-        while (position + length < f->entries_size) {
-            struct dirent *entry = (struct dirent *)(f->entries + position + length);
-            if ((size_t)entry->d_reclen > count - length)
+        buffer = malloc(count ? count : 1);
+        if (!buffer) { error = ENOMEM; goto done; }
+        size_t source_position = position;
+        while (source_position < f->entries_size) {
+            struct dirent *entry = (struct dirent *)(f->entries + source_position);
+            size_t plain = (dirent_calc_reclen(entry->d_namelen + 1) + 7u) & ~(size_t)7;
+            size_t reply_size = give_stat ? (size_t)entry->d_reclen : plain;
+            if (reply_size > count - length)
                 break;
-            length += entry->d_reclen;
+            memcpy(buffer + length, entry, reply_size);
+            ((struct dirent *)(buffer + length))->d_reclen = reply_size;
+            length += reply_size;
+            source_position += entry->d_reclen;
             index++;
         }
         if (!length && position < f->entries_size && count) {
@@ -719,7 +764,7 @@ static int io_read(resmgr_context_t *ctp, io_read_t *msg, iofunc_ocb_t *base)
             goto done;
         }
         _IO_SET_READ_NBYTES(ctp, length);
-        resmgr_msgreply(ctp, f->entries ? f->entries + position : NULL, length);
+        resmgr_msgreply(ctp, buffer, length);
         if (xtype != _IO_XTYPE_OFFSET)
             base->offset = index;
     } else {
@@ -974,10 +1019,9 @@ int fuse_mount(struct fuse *f, const char *path)
         errno = EBUSY;
         return -1;
     }
-    if (geteuid() != 0) {
-        errno = EPERM;
-        return -1;
-    }
+    /* resmgr_attach() enforces PATHSPACE and security-policy attach rules.
+     * Do not reject a dedicated non-root service authorized by that policy.
+     * This supplies no elevation to an ordinary unprivileged process. */
     if (f->session.interrupted) {
         errno = EINTR;
         return -1;

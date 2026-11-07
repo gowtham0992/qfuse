@@ -6,7 +6,7 @@ boards and independent developer reproduction require their own verification.
 
 | Area | Supported behavior |
 | --- | --- |
-| Mounting | Root, canonical absolute mount paths, one filesystem per process. Foreground execution, with optional background supervision through qfuse-mount. |
+| Mounting | Root management; default root server or an explicitly kernel-authorized service UID, canonical absolute mount paths, one filesystem per process. Foreground execution, with optional background supervision through qfuse-mount. |
 | Objects | Regular files, directories and symlinks. |
 | Operations | getattr, readdir, open/create/read/write/truncate, unlink/mkdir/rmdir/rename, symlink/readlink, chmod/chown, utimens, statfs and supplied flush/fsync callbacks. |
 | Handles | Read/write offsets, pread/pwrite, descriptor duplication, stable handles over supported rename/unlink/replacement and loader/pager references. |
@@ -69,15 +69,16 @@ before final release, after retained operations have unwound. A handle without a
 flush callback can close normally. Interruption history is shared by duplicate
 handles and lasts for that open handle's lifetime.
 
-Healthy single-threaded closes queue for their flush and report its actual
-result. Their waits remain interruptible. Multithreaded closes or admission
-pressure can also defer flush and return `EAGAIN` if a safe scope is unavailable.
+Healthy closes queue for callback admission, their path lease and per-file
+operation lock, including in multithreaded mode and under ordinary admission
+pressure. They report the actual flush result. These waits remain interruptible;
+a cancelled wait or an already interrupted handle still defers cleanup.
 Explicit fsync and ordinary synchronous flush errors remain visible to callers;
 a deferred flush cannot report an error to an already closed descriptor.
 
 ## Boundaries
 
-Low-level FUSE, non-root mounting, xattrs, advisory locking, generic ioctl/poll,
+Low-level FUSE, ordinary unprivileged mounting, xattrs, advisory locking, generic ioctl/poll,
 hard-link/device/FIFO creation, general writable mmap and transparent SSHFS
 reconnect recovery are outside the supported profile. Linux FUSE caching and
 configuration semantics are not generally emulated. Unknown mount options are
@@ -87,7 +88,13 @@ access), and exact zero `attr_timeout`, `entry_timeout` and `negative_timeout`
 values (metadata is refreshed). Positive Linux cache TTLs are not implemented.
 
 The verified SSHFS profile disables directory cache/readahead and uses synchronous
-readdir. The passthrough example mirrors the backing namespace and does not
+readdir. Complete, explicitly flagged FUSE directory attributes can accompany
+native QNX directory entries as stat extras, avoiding a separate remote stat for
+every listed child. This metadata belongs to the existing per-open directory
+snapshot; explicit stat/open operations still refresh metadata. Every reply
+checks the current caller's directory search permission before exposing extras.
+Partial type/inode hints fall back to ordinary entries; malformed full-stat hints
+are rejected. Positive cache TTLs remain unsupported. The passthrough example mirrors the backing namespace and does not
 confine exports. Out-of-band backing-object replacement has no general identity
 or race guarantee; the live build workflow uses immutable versioned executables
 and atomically replaced relative symlinks.
@@ -99,5 +106,8 @@ An uncooperative callback can delay graceful shutdown; explicit process killing
 is the recovery boundary.
 
 The filesystem implementation and SSHFS/SSH dependencies execute as the mount
-owner, currently root. Native caller-permission checks do not sandbox that
-process. QNX security-policy integration for these servers has not been verified.
+owner, root in the default profile. Native caller-permission checks do not
+sandbox that process. The optional [dedicated service profile](security.md)
+uses an enforcing QNX policy and non-root UID. Its ARM QEMU verification covers
+a real SSHFS mount and specific privilege denials; it is not a general
+production policy or complete sandbox guarantee.

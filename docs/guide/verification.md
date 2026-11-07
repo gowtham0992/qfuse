@@ -95,8 +95,9 @@ filesystem failures or unlimited progress when shared backing dependencies are s
 ## Honest limits
 
 Functional deadlines are assertions on the QNX monotonic clock in controlled
-QEMU scenarios. No elapsed performance numbers, hardware latency guarantees or
-safety certification are claimed. Cancellation does not roll back side effects
+QEMU scenarios. The separately scoped [small-file measurements](measurement.md)
+report single-run elapsed times; no hardware latency guarantees or safety
+certification are claimed. Cancellation does not roll back side effects
 or stop arbitrary foreign code.
 
 A few local runs encountered SSH handshake setup timeouts before their next
@@ -172,3 +173,41 @@ check requires explicitly deploying its freshly built outputs; the current suite
 does not rely on historical binaries being left on the target. Historical
 transcripts retain their recorded scope. The licensed SDK, private runtime and
 current build outputs remain in the owner's private environment.
+
+## Current engineering update
+
+The current core was rebuilt from private source snapshots for both architectures;
+[core-builds.json](../proof/core-builds.json) identifies the 14 matching core files.
+The earlier SMP transcripts above retain their historical scope. Current runs:
+
+- [ARM native/5,000-file/namespace](../proof/improved-native-arm.txt), including
+  all 51 cases and successful serial, parallel and same-file healthy closes.
+- [ARM isolated stress](../proof/improved-stress-arm.txt) and
+  [x86 complete sequential run](../proof/improved-x86.txt), including cancelled
+  read/open waiters and healthy close under 32-slot admission pressure.
+- [SSHFS writes on both architectures](../proof/improved-sshfs-writes.txt),
+  plus [ARM readonly/priority/wrong-key checks](../proof/improved-arm-readonly-sshfs.txt).
+- [Rebuilt bindfs](../proof/improved-bindfs.txt) with the current library.
+- [Fresh native recipe/package verification](../proof/native-recipe-current.txt)
+  for both architectures, including unchanged upstream example links.
+- [Optional enforcing service profile](security.md), independently scoped from
+  the ordinary root-server suite.
+
+The new close-pressure regression failed against the previous server: after
+admission became available, a healthy close returned EAGAIN. It now waits for
+admission/path/operation ownership and succeeds. Same-file or conflicting-path
+close waits and actual flush errors are checked separately. An interrupted
+handle still defers cleanup; descriptor numbers must not be retried.
+
+Directory metadata tests compare native stat extras with explicit lstat,
+including virtual device/inode, mode, owner/group, links, size and timestamp.
+They verify partial-hint fallback, malformed null-stat rejection, mirrored-root
+listing and stripping extras when a root-primed snapshot is read without search
+permission. These tests run on both architectures.
+
+Earlier combined runs retained failures: x86 timed interruption/isolation and
+ARM saturation deadlines failed while multiple guests/workloads were active.
+The same unchanged tests passed sequentially with the other guest idle and the
+policy guest stopped. Host contention is a plausible explanation, not a proven
+root cause. This evidence does not establish availability under host
+oversubscription. No deadline was loosened to obtain the successful reruns.

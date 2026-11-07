@@ -1,6 +1,31 @@
 --- a/sshfs.c
 +++ b/sshfs.c
-@@ -4372,7 +4372,7 @@
+@@ -974,13 +974,22 @@
+ 			return -EIO;
+ 		if (buf_get_string(buf, &longname) != -1) {
+ 			free(longname);
+-			err = buf_get_attrs(buf, &stbuf, NULL);
++			int attr_flags = 0;
++			err = buf_get_attrs(buf, &stbuf, &attr_flags);
+ 			if (!err) {
+ 				if (sshfs.follow_symlinks &&
+ 				    S_ISLNK(stbuf.st_mode)) {
+ 					stbuf.st_mode = 0;
+ 				}
+-				filler(dbuf, name, &stbuf, 0, 0);
++				enum fuse_fill_dir_flags fill_flags = 0;
++#ifdef __QNXNTO__
++				/* Only complete SFTP attributes may become QNX stat extras. */
++				int required = SSH_FILEXFER_ATTR_SIZE | SSH_FILEXFER_ATTR_UIDGID |
++					SSH_FILEXFER_ATTR_PERMISSIONS | SSH_FILEXFER_ATTR_ACMODTIME;
++				if (!sshfs.follow_symlinks && (attr_flags & required) == required)
++					fill_flags = FUSE_FILL_DIR_PLUS;
++#endif
++				filler(dbuf, name, &stbuf, 0, fill_flags);
+ 			}
+ 		}
+ 		free(name);
+@@ -4372,7 +4381,7 @@
  		exit(1);
  	}
  

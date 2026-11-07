@@ -74,3 +74,6 @@ qcc -V"$QFUSE_CC_VARIANT" -std=c11 -D_QNX_SOURCE -D_FILE_OFFSET_BITS=64 -g -O1 -
 
 qcc -V"$QFUSE_CC_VARIANT" -std=c11 -D_QNX_SOURCE -D_FILE_OFFSET_BITS=64 -g -O1 \
     -Wall -Wextra -Werror -Itests tests/test_namespace.c -o build/qnx/test-namespace
+
+qcc -V"$QFUSE_CC_VARIANT" -std=c11 -D_QNX_SOURCE -D_FILE_OFFSET_BITS=64 -g -O1 \
+    -Wall -Wextra -Werror tests/test_service_permissions.c -o build/qnx/test-service-permissions

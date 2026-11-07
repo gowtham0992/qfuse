@@ -1,0 +1,12 @@
+QFuse: mounted /data/qfuse-write-mount (read-write, dispatch pending)
+QFuse: serving with 4 minimum receiver(s); concurrent callbacks, per-file operation locking
+PASS SSHFS concurrent namespace: 8 clients create/write/rename/read/unlink independent files
+QFuse: mounted /data/qfuse-write-mount (read-write, dispatch pending)
+QFuse: serving with 4 minimum receiver(s); concurrent callbacks, per-file operation locking
+PASS writable SSHFS: 200037 bytes, 64 KiB writes/reads, pwrite, truncate, chmod, timestamps, rename, symlink, statfs and persisted remount
+QFuse: mounted /data/qfuse-write-mount (read-write, dispatch pending)
+QFuse: serving with 4 minimum receiver(s); concurrent callbacks, per-file operation locking
+PASS SSHFS concurrent namespace: 8 clients create/write/rename/read/unlink independent files
+QFuse: mounted /data/qfuse-write-mount (read-write, dispatch pending)
+QFuse: serving with 4 minimum receiver(s); concurrent callbacks, per-file operation locking
+PASS writable SSHFS: 200037 bytes, 64 KiB writes/reads, pwrite, truncate, chmod, timestamps, rename, symlink, statfs and persisted remount

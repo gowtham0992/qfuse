@@ -23,8 +23,8 @@ case "$mode" in
   if [[ $mode == --full ]]; then bash scripts/target-exec.sh 'QFUSE_PASSTHROUGH_BINARY=/data/qfuse/qfuse-passthrough /data/qfuse/test-passthrough'; fi
   ;;
  --stall) bash scripts/target-exec.sh '/data/qfuse/test-stall && /data/qfuse/test-stall --timer && /data/qfuse/test-stall --exit && /data/qfuse/test-stall --close-stall';;
- --namespace) bash scripts/target-exec.sh '/data/qfuse/test-namespace read && /data/qfuse/test-namespace mkdir && /data/qfuse/test-namespace rename && /data/qfuse/test-namespace fair && /data/qfuse/test-namespace grace && /data/qfuse/test-namespace serial-close && /data/qfuse/test-namespace flush-error';;
- --saturation) bash scripts/target-exec.sh '/data/qfuse/test-stall-load && /data/qfuse/test-stall-load --open';;
+ --namespace) bash scripts/target-exec.sh '/data/qfuse/test-namespace read && /data/qfuse/test-namespace mkdir && /data/qfuse/test-namespace rename && /data/qfuse/test-namespace fair && /data/qfuse/test-namespace grace && /data/qfuse/test-namespace serial-close && /data/qfuse/test-namespace parallel-close && /data/qfuse/test-namespace io-close && /data/qfuse/test-namespace flush-error';;
+ --saturation) bash scripts/target-exec.sh '/data/qfuse/test-stall-load && /data/qfuse/test-stall-load --open && /data/qfuse/test-stall-load --close-pressure';;
  --report) bash scripts/target-exec.sh '/data/qfuse/test-operation-report';;
  --readonly-sshfs)
   bash scripts/target-exec.sh '/data/qfuse/test-sshfs && QFUSE_TEST_HIGH_PRIORITY=1 /data/qfuse/test-sshfs'

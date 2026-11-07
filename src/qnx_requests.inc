@@ -18,6 +18,7 @@ static pthread_once_t state_once = PTHREAD_ONCE_INIT;
 static int state_error;
 static _Thread_local unsigned state_depth;
 static pthread_mutex_t pending_mutex = PTHREAD_MUTEX_INITIALIZER;
+static pthread_cond_t payload_ready = PTHREAD_COND_INITIALIZER;
 static struct qf_path_gate namespace_gate;
 static _Thread_local struct qf_path_lease namespace_lease;
 struct pending_request {
@@ -106,6 +107,7 @@ static void cancel_waiter(struct pending_request *r)
         if (r->handle)
             atomic_store(&r->handle->interrupted, 1);
         cancelled_requests++;
+        pthread_cond_broadcast(&payload_ready);
         qf_gate_notify(&namespace_gate);
         namespace_changed();
         /* -1 asks the kernel to select EINTR or ETIMEDOUT for this unblock. */
@@ -151,6 +153,41 @@ static int claim_payload(void)
     }
     pthread_mutex_unlock(&pending_mutex);
     return available;
+}
+/* A healthy close is lifecycle work, but a supplied flush is a callback.
+ * Queue for callback admission instead of turning normal load into close errors.
+ * The kernel-unblock monitor wakes this wait; interrupted handles still defer.
+ */
+static int claim_payload_wait(void)
+{
+    if (!current_request || current_request->payload)
+        return 1;
+    unsigned depth = state_drop();
+    waiting_begin();
+    pthread_mutex_lock(&pending_mutex);
+    int e = 0;
+    while (payload_requests >= REQUEST_LIMIT && !request_cancelled() &&
+           !(current_request->handle && atomic_load(&current_request->handle->interrupted))) {
+        e = pthread_cond_wait(&payload_ready, &pending_mutex);
+        if (e)
+            break;
+    }
+    int available = !e && payload_requests < REQUEST_LIMIT && !request_cancelled() &&
+                    !(current_request->handle && atomic_load(&current_request->handle->interrupted));
+    if (available) {
+        payload_requests++;
+        current_request->payload = 1;
+    }
+    pthread_mutex_unlock(&pending_mutex);
+    waiting_end();
+    state_restore(depth);
+    return available;
+}
+static int operation_abandoned(void)
+{
+    return request_cancelled() ||
+           (current_request && current_request->close_wait && current_request->handle &&
+            atomic_load(&current_request->handle->interrupted));
 }
 static int namespace_cancelled(void *p)
 {
@@ -303,11 +340,11 @@ static int operation_lock(pthread_mutex_t *mutex)
 {
     if (!current_request)
         return pthread_mutex_lock(mutex);
-    if (request_cancelled())
+    if (operation_abandoned())
         return ECANCELED;
     int e = pthread_mutex_trylock(mutex);
     while (e == EBUSY || e == ETIMEDOUT) {
-        if (request_cancelled())
+        if (operation_abandoned())
             return ECANCELED;
         struct timespec deadline;
         if (clock_gettime(CLOCK_MONOTONIC, &deadline))
@@ -319,7 +356,7 @@ static int operation_lock(pthread_mutex_t *mutex)
         }
         e = pthread_mutex_clocklock(mutex, CLOCK_MONOTONIC, &deadline);
     }
-    if (!e && request_cancelled()) {
+    if (!e && operation_abandoned()) {
         pthread_mutex_unlock(mutex);
         return ECANCELED;
     }

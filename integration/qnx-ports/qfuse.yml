@@ -27,7 +27,7 @@ jobs:
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262 # v4
         with:
           repository: gowtham0992/qfuse
-          ref: main
+          ref: dd3edf04d7515b4abc6f750c4adce6cd1a2cc78f
           path: qfuse
           persist-credentials: false
       - name: Compile, stage, and verify installed package

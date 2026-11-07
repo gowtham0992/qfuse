@@ -130,3 +130,15 @@ pkg-config checks, header-only installation and safe uninstall. The
 passthrough linked from that installed native package, on each QEMU guest.
 The proposed upstream SDK workflow is a compile/package job; it is not a claim
 that public GitHub CI has booted QNX or that a maintainer has approved the job.
+
+The native recipe has four host regressions for recursive staging configuration.
+They model SDK defaults overriding exported variables and verify environment and
+command-line staging, the private default, and rejection of an SDK destination.
+The regression failed on the old recipe; the SDK dry run also checks all six
+binary install destinations.
+
+A clean checkout of the published staging fix and upstream fork recipe also
+built and verified both architectures in Ubuntu 24.04, with every output in the
+private staging root and no QFuse products under the SDK. This remains the
+author's own SDK, not independent-user reproduction. One earlier attempt failed
+in the host emulator and is not counted as a successful build.

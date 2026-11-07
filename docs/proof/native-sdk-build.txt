@@ -9,3 +9,17 @@ PASS native hinstall stages public headers without target binaries
 PASS native uninstall preserves modified and unrelated files
 Removed only unchanged QFuse installation files.
 PASS native uninstall removes unchanged package files only
+
+Published clean-clone packaging check (same author/private SDK, Ubuntu 24.04 userland):
+QFuse source: d2bc2adadaeba993171efa4877513e5125add546
+qnx-ports fork recipe: c1d909aa9581e05730d72ea155e2a932a340c4df
+PASS installed package: unchanged upstream hello and passthrough link using installed fuse3 and opt-in qfuse-dirent metadata.
+PASS native recipe target tools: aarch64le
+PASS installed package: unchanged upstream hello and passthrough link using installed fuse3 and opt-in qfuse-dirent metadata.
+PASS native recipe target tools: x86_64
+PASS published clean clone: both architectures staged privately; no QFuse outputs in SDK
+PASS four host staging regressions (environment, command line, private default, SDK rejection)
+PASS SDK dry run: all six binary destinations preserve environment-supplied private staging
+The earlier fresh-clone attempt crashed in the host x86 emulator and is not counted as a pass.
+The staging regression initially installed six QFuse products into SDK usr/local; all six were
+hash-matched against their exact build outputs before removal. No other SDK files were removed.

@@ -64,6 +64,10 @@ run on QNX; the static library and pkg-config metadata are for cross-compilation
 See [build and deployment](docs/guide/build.md) for native Linux and the optional
 Mac/container arrangement.
 
+For a first build without SSHFS or the local lab, follow the
+[independent reproduction guide](docs/guide/reproduce.md): build, mount hello,
+read its file, and stop it using your own SDK and target.
+
 ## What is verified
 
 - SSHFS reads and writes over authenticated SFTP, with host-key rejection and

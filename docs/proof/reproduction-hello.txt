@@ -1,0 +1,13 @@
+Author-run check of docs/guide/reproduce.md, not independent adoption.
+Used unchanged installed-package hello and lifecycle tools from the published
+native build, on the existing x86_64 QNX 8.0 QEMU guest.
+The SDK checker passed in Linux without Docker/QEMU requirements.
+
+Starting background filesystem at /data/qfuse-repro/mnt...
+/data/qfuse-repro/mnt: ready (pid 24219670)
+Operations: 0/32; cancelled waits: 0; deferred cleanup: 0
+/data/qfuse-repro/mnt: ready (pid 24219670)
+Operations: 0/32; cancelled waits: 0; deferred cleanup: 0
+Hello World!
+Stopped /data/qfuse-repro/mnt
+PASS documented independent-reproduction sequence (author guest, not independent adoption)

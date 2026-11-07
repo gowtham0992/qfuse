@@ -9,6 +9,11 @@ arrangement runs Linux SDK tools under x86 emulation; QNX does not support a
 native macOS/ARM SDK host. Native Linux SDK users can use the same scripts without
 Colima. See the optional container lab below.
 
+For a minimal build-to-mount check, start with the
+[independent reproduction guide](reproduce.md). `python3 scripts/doctor.py`
+checks native SDK build prerequisites; Docker and QEMU are required only by
+its explicit `--mode lab` profile.
+
 ## Compile
 
 Install host tools: Bash, GNU make, gcc/g++, Python 3/venv/pip, patch, pkg-config,

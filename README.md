@@ -16,18 +16,37 @@ QEMU, including four-processor runs on both. Read the
 
 ## Where it fits
 
-QFuse is for developers bringing existing FUSE filesystems to QNX who want to
-reuse their callback code. SSHFS is a working port: a target can mount a laptop
-or server through existing SSH/SFTP access and pinned host keys, without setting
-up an NFS export. The optional bindfs port exercises another callback-based
-filesystem. Compatibility with other FUSE projects must be evaluated individually.
+QNX 8.0's [discontinuation notice](https://www.qnx.com/developers/docs/relnotes8.0/com.qnx.doc.discontinuation_notice/topic/networking.html)
+removes `fs-cifs` and directs users to compatible third-party SMBv3 clients;
+Qnet is also discontinued. QNX's [7.1 host-share guide](https://www.qnx.com/developers/docs/7.1/com.qnx.doc.adas.getting_started.overview/topic/mount_fs_to_image.html)
+documented mounting development folders with CIFS or NFS. Access to remote
+files remains useful when bringing software to a target.
 
-QNX already provides an [NFS client](https://www.qnx.com/developers/docs/8.0/com.qnx.doc.neutrino.user_guide/topic/fsystems_NFS.html),
-and its [VS Code Toolkit](https://www.qnx.com/developers/docs/8.0/com.qnx.doc.qnxtoolkit.user_guide/topic/launching_an_application.html)
-builds and launches programs on a target. Those cover established sharing and
-deployment workflows. QFuse's contribution is the FUSE porting layer; the shared
-build folder below is one example of using its SSHFS port. No performance
-comparison with NFS or other deployment tools is claimed.
+QFuse gives developers a tested porting layer for high-level FUSE code. Its
+working SSHFS port mounts a server through authorized SSH/SFTP access with key
+authentication and a pinned host key, without configuring an NFS export. SSHFS
+provides an alternative host-share transport; it does not mount SMB shares or
+replace Qnet's distributed services. The optional bindfs port exercises another
+callback-based filesystem. Other FUSE projects require individual evaluation.
+
+QNX's [NFS client](https://www.qnx.com/developers/docs/8.0/com.qnx.doc.neutrino.user_guide/topic/fsystems_NFS.html)
+and [VS Code Toolkit](https://www.qnx.com/developers/docs/8.0/com.qnx.doc.qnxtoolkit.user_guide/topic/launching_an_application.html)
+still support established sharing and deployment workflows. QFuse's contribution
+is the QNX 8.0 FUSE porting layer, with SSHFS as one verified use. See
+[background and prior art](docs/guide/background.md) for the historical context
+and the limits of the demand evidence.
+
+## Prior art and naming
+
+The [QNX Community FUSE Project](https://community.qnx.com/sf/projects/qnx_community_fuse_project/),
+created in 2009, already described mapping FUSE onto QNX resource managers. Its
+[wiki](https://community.qnx.com/sf/wiki/do/viewPage/projects.qnx_community_fuse_project/wiki/HomePage)
+uses the name `qfuse`, libfuse 2.7.4 and QNX 6.3.2. This repository is an
+independent implementation for a tested QNX 8.0/FUSE 3 subset; it is not a
+continuation of that source tree or an official QNX product. The architectural
+idea and name have precedent. Our implementation, supported subset, interruption
+handling, lifecycle tools and current verification are the work presented here.
+Upstream libfuse fixtures and their licenses are listed in [THIRD_PARTY.md](THIRD_PARTY.md).
 
 ## Use it on QNX
 
@@ -101,14 +120,23 @@ read its file, and stop it using your own SDK and target.
 [Verification and evidence](docs/guide/verification.md) distinguishes native
 execution from host-only checks and lists the exact qualifications.
 
+## Measured small-file cost
+
+In one four-CPU ARM QNX QEMU/loopback lab run, `ls -lR` over 5,000 synthetic
+files took **91.834 s through SSHFS** and **0.507 s natively**.
+Opening and verifying all 5,000 files (485,000 bytes) took 95.400 s and
+2.632 s respectively. This demonstrates substantial small-file overhead
+in that emulated setup. It is one sample with unflushed caches, a Mac-backed
+SFTP share and no physical network; it is not a hardware benchmark or NFS
+comparison. [Method, environment and raw results](docs/guide/measurement.md).
+
 ## How it works
 
 Each filesystem links against `libfuse3.a`. Native QNX connect/I/O messages map
 to its callbacks, with authenticated caller identities and permission checks.
 The dispatcher permits callbacks on different files to overlap. Tests hold one
 callback while unrelated requests complete and exercise four-CPU scheduling;
-they do not assert simultaneous callback execution on distinct CPUs. A per-file
-operation lock
+they do not assert simultaneous callback execution on distinct CPUs. A per-file operation lock
 serializes open, stat and I/O on that file. Short state critical sections protect
 SDK attributes and namespace bookkeeping. Queued path leases protect namespace
 transactions, including atomic source/destination reservation for rename. The

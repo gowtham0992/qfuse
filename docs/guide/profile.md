@@ -97,3 +97,7 @@ performance evaluations, hard-real-time guarantees or safety certification. A
 third-party filesystem must support concurrent callbacks for multithreaded use.
 An uncooperative callback can delay graceful shutdown; explicit process killing
 is the recovery boundary.
+
+The filesystem implementation and SSHFS/SSH dependencies execute as the mount
+owner, currently root. Native caller-permission checks do not sandbox that
+process. QNX security-policy integration for these servers has not been verified.

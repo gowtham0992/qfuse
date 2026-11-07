@@ -1,0 +1,45 @@
+{
+  "dataset": {
+    "directories": 10,
+    "files": 5000,
+    "bytes_per_file": 97,
+    "bytes_total": 485000
+  },
+  "target": "QNX 8.0.0 aarch64le, 4 CPUs, 512 MiB, QEMU 8.2 MTTCG",
+  "host_chip": "Apple M4",
+  "docker_host_cpus": 4,
+  "sftp": "Ubuntu 24.04 OpenSSH internal-sftp, native ARM64 container; read-only Mac bind-mounted synthetic share",
+  "transport": "QEMU user networking and loopback guestfwd via nc; no physical network or injected latency",
+  "cache": "No cache flush. Native tree just written; host fixture just written. Fresh SSHFS mount; read loop follows ls. Verified QFuse launcher SSHFS profile.",
+  "replicates": 1,
+  "instrument_source_sha256": "2e31349bb75b452c7462a22e2236a5be9e735517d218fe377c0d59255997924e",
+  "scope": "Single author-run emulated lab measurement, not a hardware/LAN benchmark or NFS comparison.",
+  "public_core_revision": "9c4e67217918809976e0aad4a52deadfdf9c3f81",
+  "results": [
+    {
+      "operation": "ls-lR",
+      "source": "native",
+      "elapsed_ns": 506898880
+    },
+    {
+      "operation": "ls-lR",
+      "source": "sshfs",
+      "elapsed_ns": 91834081168
+    },
+    {
+      "operation": "verified-read-loop",
+      "source": "native",
+      "files": 5000,
+      "bytes": 485000,
+      "elapsed_ns": 2631711504
+    },
+    {
+      "operation": "verified-read-loop",
+      "source": "sshfs",
+      "files": 5000,
+      "bytes": 485000,
+      "elapsed_ns": 95400264240
+    }
+  ],
+  "cleanup": "Synthetic host/native fixtures, temporary helper/build directory, mount and share removed."
+}

@@ -10,7 +10,9 @@ clean-clone rebuilds are not independent developer adoption.
 Historical evidence predates the explicit SMP run and used one guest CPU;
 receiver/worker counts in those transcripts are server threads, not processors.
 The current lab defaults to four CPUs with multi-threaded TCG. Verify the actual
-processor count with `pidin info` inside each guest. These are emulated SMP
+processor count with `pidin info` inside each guest. Held-callback tests prove
+overlap and unrelated progress; append tests exercise serialization on one file.
+No test asserts simultaneous callback execution on distinct CPUs. These are emulated SMP
 functional checks, not physical-board or hardware-latency measurements.
 
 [smp.txt](../proof/smp.txt) records completed native, namespace, saturation,
@@ -156,3 +158,17 @@ built and verified both architectures in Ubuntu 24.04, with every output in the
 private staging root and no QFuse products under the SDK. This remains the
 author's own SDK, not independent-user reproduction. One earlier attempt failed
 in the host emulator and is not counted as a successful build.
+
+## Guest payload hygiene
+
+`scripts/deploy-completion-tests.sh` names the current applications and native
+probes. `exec-probe` is a maintained helper built from `tests/exec_probe.c` and
+loaded through the mount by `tests/test_lifecycle.c`; it is not an obsolete
+control binary. Optional bindfs and its probe come from the bindfs recipe.
+
+Historical `second-*`, clone/package-check copies and pre-fix control binaries
+have been removed from the guests. Repeating an optional clean-clone or package
+check requires explicitly deploying its freshly built outputs; the current suite
+does not rely on historical binaries being left on the target. Historical
+transcripts retain their recorded scope. The licensed SDK, private runtime and
+current build outputs remain in the owner's private environment.

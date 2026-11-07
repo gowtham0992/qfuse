@@ -1,18 +1,33 @@
 # QFuse
 
-Mount a development folder on QNX, build on your computer, and run the result
-from the target. QFuse runs a tested subset of high-level FUSE filesystems as
-ordinary QNX 8.0 resource-manager processes, including SSHFS.
+Run existing high-level FUSE filesystem code as native QNX 8.0 resource-manager
+processes. QFuse maps a tested subset of FUSE callbacks onto QNX message passing,
+without an additional FUSE kernel module.
 
-Waiting clients can be interrupted when a filesystem callback stalls. A separate
-native control channel provides status and stop operations independently of the
-mounted folder. The background launcher checks the process identity and instance
-before sending management commands.
+QFuse can end a client's wait when a filesystem callback stalls, without requiring
+that callback to cooperate. A separate authenticated channel provides status and
+stop operations without traversing the mounted folder. The callback may continue
+running until it returns or its filesystem process is terminated.
 
-**Experimental, source-compatible subset of FUSE API 31.** Verified on QNX 8.0
-x86_64 and aarch64le in QEMU, including four-processor runs on both. Mounting
-requires root. See the
-[supported profile](docs/guide/profile.md) before porting another application.
+**Experimental, source-compatible subset of FUSE API 31. Root mounts; a Linux
+x86_64 SDK build host is required.** Verified on QNX 8.0 x86_64 and aarch64le in
+QEMU, including four-processor runs on both. Read the
+[supported profile](docs/guide/profile.md) before porting an application.
+
+## Where it fits
+
+QFuse is for developers bringing existing FUSE filesystems to QNX who want to
+reuse their callback code. SSHFS is a working port: a target can mount a laptop
+or server through existing SSH/SFTP access and pinned host keys, without setting
+up an NFS export. The optional bindfs port exercises another callback-based
+filesystem. Compatibility with other FUSE projects must be evaluated individually.
+
+QNX already provides an [NFS client](https://www.qnx.com/developers/docs/8.0/com.qnx.doc.neutrino.user_guide/topic/fsystems_NFS.html),
+and its [VS Code Toolkit](https://www.qnx.com/developers/docs/8.0/com.qnx.doc.qnxtoolkit.user_guide/topic/launching_an_application.html)
+builds and launches programs on a target. Those cover established sharing and
+deployment workflows. QFuse's contribution is the FUSE porting layer; the shared
+build folder below is one example of using its SSHFS port. No performance
+comparison with NFS or other deployment tools is claimed.
 
 ## Use it on QNX
 
@@ -90,7 +105,10 @@ execution from host-only checks and lists the exact qualifications.
 
 Each filesystem links against `libfuse3.a`. Native QNX connect/I/O messages map
 to its callbacks, with authenticated caller identities and permission checks.
-Callbacks can run concurrently on different files. A per-file operation lock
+The dispatcher permits callbacks on different files to overlap. Tests hold one
+callback while unrelated requests complete and exercise four-CPU scheduling;
+they do not assert simultaneous callback execution on distinct CPUs. A per-file
+operation lock
 serializes open, stat and I/O on that file. Short state critical sections protect
 SDK attributes and namespace bookkeeping. Queued path leases protect namespace
 transactions, including atomic source/destination reservation for rename. The

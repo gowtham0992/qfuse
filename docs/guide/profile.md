@@ -23,7 +23,9 @@ transfers use normal partial I/O. Admission exhaustion returns `EAGAIN`. New ope
 OCB budget is exhausted. The request pool can grow to 64 threads, leaving
 capacity for descriptor lifecycle and control messages.
 
-Callbacks on different files may run concurrently. Same-file I/O is serialized
+Callbacks on different files may overlap. The tests demonstrate request
+concurrency, callback overlap and clean four-CPU scheduling runs; no test asserts
+simultaneous callback execution on distinct CPUs. Same-file I/O is serialized
 by a priority-inheriting operation mutex, including open and stat on the same
 file. Cancelled requests waiting for that mutex unwind and return their worker
 and admission slot; a callback already running retains its resources until it

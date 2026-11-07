@@ -2,6 +2,8 @@ Four-processor QNX 8.0 functional verification
 
 Scope: author-run QEMU, multi-threaded TCG, existing private SDK/runtime.
 Both guests report four active processors. No physical board or outside-user result.
+The gates demonstrate request concurrency, callback overlap and SMP scheduling
+coverage; they do not assert simultaneous callback execution on distinct CPUs.
 Existing core binaries were reused; all 14 core source hashes match the current
 tree and both existing build-source manifests. This is not a new clean rebuild
 or independent binary-to-source attestation. Core C code was not changed.

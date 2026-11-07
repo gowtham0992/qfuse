@@ -72,7 +72,8 @@ retains the cleanup worker; process-level recovery remains the boundary.
 
 The connect and I/O unblock handlers check `MsgInfo()` and the kernel's pending
 unblock flag before returning the appropriate signal/timeout error. A separate
-monitor provides a receiver-independent fallback. Requests remain registered
+monitor provides a receiver-independent fallback, scanning pending requests
+with `MsgInfo()` every 10 ms. Requests remain registered
 until their SDK dispatch completes; cancelled contexts cannot reply to a later
 send reusing a receive ID. Private I/O buffers remain alive while callbacks run.
 
@@ -83,6 +84,11 @@ cancelled waiter to unwind without acquiring the mutex. Both the OCB-dispatch
 and connect/open paths use it. A thread already inside a foreign callback keeps
 its admission slot, buffers and lock until the callback returns; these cannot be
 reclaimed safely merely because the client stopped waiting.
+
+Namespace condition waits, timed operation-mutex waits and the periodic cancel
+monitor are three separate mechanisms. At saturation, many operation-lock
+waiters can wake every 10 ms in addition to the monitor's scan. Their CPU cost
+is unmeasured; this is not a polling-free implementation.
 
 The default admission budget reserves dispatcher capacity for descriptor and
 control work. A full budget produces backpressure rather than adding unbounded

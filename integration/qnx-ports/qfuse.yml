@@ -38,5 +38,5 @@ jobs:
           set -euo pipefail
           source ~/qnx/800/qnxsdp-env.sh
           stage=$(mktemp -d "$RUNNER_TEMP/qfuse.XXXXXX")
-          QNX_PROJECT_ROOT="$GITHUB_WORKSPACE/qfuse" INSTALL_ROOT_nto="$stage" \
-            make -C build-files/ports/qfuse CPULIST="$QFUSE_CPU" install verify
+          make -C build-files/ports/qfuse QNX_PROJECT_ROOT="$GITHUB_WORKSPACE/qfuse" \
+            INSTALL_ROOT_nto="$stage" CPULIST="$QFUSE_CPU" install verify

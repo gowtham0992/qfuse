@@ -8,6 +8,7 @@ fetch-sshfs:
 check: fetch-libfuse
 	python3 scripts/test-host.py
 	python3 -m unittest discover -s tests -p 'test_compiler_wrapper.py'
+	python3 -m unittest discover -s tests -p 'test_native_make.py'
 fuse3: fetch-libfuse
 	bash scripts/build-linux.sh --mount
 sshfs: fetch
